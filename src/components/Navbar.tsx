@@ -92,8 +92,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
             </div>
           </div>
 
-          {/* Action Buttons: My Account & Order History (NO ICONS, NO SUBTITLES) */}
-          <div className="py-3 space-y-2">
+          {/* Action Button: My Account */}
+          <div className="py-3">
             <button
               type="button"
               onClick={() => {
@@ -104,18 +104,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
               className="w-full text-left rounded-xl bg-gray-50 hover:bg-yellow hover:text-charcoal px-4 py-2.5 text-xs font-bold text-gray-800 transition-all cursor-pointer"
             >
               My Account
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsProfileOpen(false);
-                setIsMobileMenuOpen(false);
-                onNavigate('account', undefined, 'orders');
-              }}
-              className="w-full text-left rounded-xl bg-gray-50 hover:bg-yellow hover:text-charcoal px-4 py-2.5 text-xs font-bold text-gray-800 transition-all cursor-pointer"
-            >
-              Order History
             </button>
           </div>
 
@@ -531,15 +519,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
                   className="block w-full text-left py-2 text-base font-semibold text-charcoal"
                 >
                   My Account
-                </button>
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    onNavigate('account', undefined, 'orders');
-                  }}
-                  className="block w-full text-left py-2 text-base font-semibold text-charcoal"
-                >
-                  Order History
                 </button>
               </div>
             ) : (

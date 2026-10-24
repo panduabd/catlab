@@ -167,7 +167,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div className="group relative overflow-hidden rounded-[28px] border border-gray-200/80 bg-white p-6 sm:p-8 shadow-[0_2px_16px_rgba(0,0,0,0.02)] transition-all duration-300 hover:border-gray-300 hover:shadow-[0_16px_36px_rgba(0,0,0,0.06)]">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-        {/* Left Column: Visual Staging (seamless background, clickable to /detail-product) */}
+        {/* Left Column: Visual Staging (seamless background, clickable to /products/product-url) */}
         <div
           onClick={() => onNavigate('product')}
           className="md:col-span-5 relative h-64 sm:h-72 w-full rounded-2xl bg-[#f8f9fa] p-6 sm:p-8 flex items-center justify-center cursor-pointer transition-colors group-hover:bg-[#f3f4f6]"

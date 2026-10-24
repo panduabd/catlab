@@ -1655,15 +1655,6 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
             >
               <ImageIcon className={`h-4 w-4 ${activeDetailTab === 'media' ? 'text-charcoal' : 'text-gray-400'}`} />
               <span>Media Gallery</span>
-              <span
-                className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold border transition-colors ${
-                  activeDetailTab === 'media'
-                    ? 'bg-gray-100 text-gray-800 border-gray-200'
-                    : 'bg-white/80 text-gray-500 border-gray-200/60'
-                }`}
-              >
-                {currentEditingProduct.images.length}
-              </span>
             </button>
 
             <button
@@ -1677,15 +1668,6 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
             >
               <Layers className={`h-4 w-4 ${activeDetailTab === 'variants' ? 'text-charcoal' : 'text-gray-400'}`} />
               <span>Product Variants</span>
-              <span
-                className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold border transition-colors ${
-                  activeDetailTab === 'variants'
-                    ? 'bg-gray-100 text-gray-800 border-gray-200'
-                    : 'bg-white/80 text-gray-500 border-gray-200/60'
-                }`}
-              >
-                {currentEditingProduct.variants.length}
-              </span>
             </button>
 
             <button
@@ -1699,15 +1681,6 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
             >
               <List className={`h-4 w-4 ${activeDetailTab === 'accordions' ? 'text-charcoal' : 'text-gray-400'}`} />
               <span>Content Accordions</span>
-              <span
-                className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold border transition-colors ${
-                  activeDetailTab === 'accordions'
-                    ? 'bg-gray-100 text-gray-800 border-gray-200'
-                    : 'bg-white/80 text-gray-500 border-gray-200/60'
-                }`}
-              >
-                {currentEditingProduct.accordions.length}
-              </span>
             </button>
           </div>
         </div>
@@ -1720,7 +1693,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                 {/* ================================================================= */}
                 {/* LEFT COLUMN: Main Product Details (8 Cols - Floating Sticky)     */}
                 {/* ================================================================= */}
-                <div className="lg:col-span-8 space-y-6 lg:sticky lg:top-20 self-start">
+                <div className="lg:col-span-8 space-y-6 lg:sticky lg:top-36 self-start">
                   {/* TAB 1: GENERAL INFORMATION */}
                   {activeDetailTab === 'general' && (
                     <div className="rounded-3xl border border-gray-200/90 bg-white p-6 sm:p-7 shadow-2xs space-y-4">

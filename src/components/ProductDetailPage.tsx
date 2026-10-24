@@ -315,11 +315,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
 
               {/* Quantity Stepper & Buttons */}
               <div className="mt-6 pt-5 border-t border-gray-100 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-700">
-                    {pdp.quantityLabel}
-                  </span>
-
+                <div className="flex items-center">
                   {/* Untitled UI Stepper Input Group */}
                   <div className="inline-flex items-center rounded-xl border border-gray-300 bg-white shadow-2xs">
                     <button

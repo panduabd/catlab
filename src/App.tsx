@@ -86,19 +86,29 @@ export const App: React.FC = () => {
 
     if (pathname.includes('/contact')) return 'contact';
 
-    // Detail product page (/detail-product)
+    // Detail product page (/products/product-url, or legacy /detail-product)
     if (
+      (pathname.startsWith('/products/') && pathname.length > '/products/'.length) ||
       pathname.includes('/detail-product') ||
       pathname.includes('/product-detail') ||
+      hash.startsWith('#products/') ||
       hash === '#detail-product' ||
       hash === '#product-detail'
     ) {
+      if (pathname.includes('/detail-product') || pathname.includes('/product-detail')) {
+        try {
+          window.history.replaceState(null, '', '/products/product-url');
+        } catch {
+          // ignore
+        }
+      }
       return 'product';
     }
 
     // Products catalog page (/products, previously /catalog)
     if (
-      pathname.includes('/products') ||
+      pathname === '/products' ||
+      pathname === '/products/' ||
       pathname.includes('/catalog') ||
       hash === '#products' ||
       hash === '#catalog'
@@ -179,9 +189,10 @@ export const App: React.FC = () => {
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (view === 'product') {
-      // Product detail page now points to /detail-product (moved from /products)
+      // Product detail page points to /products/product-url (or /products/:slug)
+      const productSlug = anchor || 'product-url';
       try {
-        window.history.pushState(null, '', '/detail-product');
+        window.history.pushState(null, '', `/products/${productSlug}`);
       } catch {
         // ignore
       }
@@ -246,14 +257,24 @@ export const App: React.FC = () => {
       } else if (pathname.includes('/contact')) {
         setCurrentView('contact');
       } else if (
+        (pathname.startsWith('/products/') && pathname.length > '/products/'.length) ||
         pathname.includes('/detail-product') ||
         pathname.includes('/product-detail') ||
+        hash.startsWith('#products/') ||
         hash === '#detail-product' ||
         hash === '#product-detail'
       ) {
+        if (pathname.includes('/detail-product') || pathname.includes('/product-detail')) {
+          try {
+            window.history.replaceState(null, '', '/products/product-url');
+          } catch {
+            // ignore
+          }
+        }
         setCurrentView('product');
       } else if (
-        pathname.includes('/products') ||
+        pathname === '/products' ||
+        pathname === '/products/' ||
         pathname.includes('/catalog') ||
         hash === '#products' ||
         hash === '#catalog'
