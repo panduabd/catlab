@@ -79,12 +79,13 @@ export interface CustomCarrierDefinition {
 
 export interface CoverageAreaItem {
   id: string;
-  name: string; // Internal label, e.g. "Taiwan Domestic", "Kinmen & Penghu Islands"
+  name: string; // Internal label, e.g. "Taiwan Domestic", "East Asia Zone"
   coverageType: 'local' | 'global';
   isActive: boolean;
 
-  // Global settings (Single country per global area entry to prevent conflicts)
-  selectedCountry?: string; // Country code, e.g. "JP"
+  // Global settings (Supports single or multiple destination countries per area)
+  selectedCountry?: string; // Primary/legacy country code, e.g. "JP"
+  selectedCountries?: string[]; // Multiple country codes or custom country codes, e.g. ["JP", "KR"]
 
   // Local (Taiwan) settings
   isAllTaiwan: boolean; // Fallback "All Taiwan"
@@ -341,10 +342,18 @@ export const TAIWAN_CITIES: TaiwanCity[] = [
 ];
 
 // ============================================================================
-// GLOBAL COUNTRIES LIST (SINGLE COUNTRY PER ENTRY)
+// GLOBAL COUNTRIES LIST (INTERNATIONAL DESTINATIONS)
 // ============================================================================
 
-export const GLOBAL_COUNTRIES = [
+export interface GlobalCountryDef {
+  code: string;
+  name: string;
+  cleanName: string;
+  region?: string;
+  isCustom?: boolean;
+}
+
+export const GLOBAL_COUNTRIES: GlobalCountryDef[] = [
   { code: 'MY', name: 'Malaysia (馬來西亞)', cleanName: 'Malaysia', region: 'Southeast Asia' },
   { code: 'JP', name: 'Japan (日本)', cleanName: 'Japan', region: 'East Asia' },
   { code: 'SG', name: 'Singapore (新加坡)', cleanName: 'Singapore', region: 'Southeast Asia' },
@@ -592,6 +601,7 @@ const initialCoverageAreas: CoverageAreaItem[] = [
     isAllDistricts: false,
     selectedDistricts: [],
     selectedCountry: 'MY',
+    selectedCountries: ['MY'],
     carriers: [
       {
         carrierId: 'c-post',
@@ -629,6 +639,7 @@ const initialCoverageAreas: CoverageAreaItem[] = [
     isAllDistricts: false,
     selectedDistricts: [],
     selectedCountry: 'JP',
+    selectedCountries: ['JP'],
     carriers: [
       {
         carrierId: 'c-post',
@@ -708,6 +719,18 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
   const [newCarrierService, setNewCarrierService] = useState('');
   const [newCarrierLogoPreview, setNewCarrierLogoPreview] = useState<string>('');
 
+  // Custom Destination Countries State
+  const [customCountries, setCustomCountries] = useState<GlobalCountryDef[]>([]);
+  const [showAddCustomCountryModal, setShowAddCustomCountryModal] = useState(false);
+  const [newCountryName, setNewCountryName] = useState('');
+  const [newCountryCode, setNewCountryCode] = useState('');
+
+  // Unified Countries List (Predefined + Custom)
+  const allCountries: GlobalCountryDef[] = [
+    ...GLOBAL_COUNTRIES,
+    ...customCountries
+  ];
+
   // Engine Matching Tester Modal State
   const [isTesterModalOpen, setIsTesterModalOpen] = useState(false);
   const [testerCountry, setTesterCountry] = useState<'Taiwan' | string>('Taiwan');
@@ -723,8 +746,16 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
   // 1. Countries already claimed by other Global areas
   const claimedCountriesMap = new Map<string, string>(); // countryCode -> areaName
   coverageAreas.forEach((area) => {
-    if ((!editingArea || area.id !== editingArea.id) && area.coverageType === 'global' && area.selectedCountry) {
-      claimedCountriesMap.set(area.selectedCountry, area.name);
+    if ((!editingArea || area.id !== editingArea.id) && area.coverageType === 'global') {
+      const countries =
+        area.selectedCountries && area.selectedCountries.length > 0
+          ? area.selectedCountries
+          : area.selectedCountry
+          ? [area.selectedCountry]
+          : [];
+      countries.forEach((code) => {
+        claimedCountriesMap.set(code, area.name);
+      });
     }
   });
 
@@ -749,6 +780,21 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
       }
     });
   }
+
+  // 4. Countries currently selected in editingArea
+  const editingSelectedCountries: string[] =
+    editingArea && editingArea.coverageType === 'global'
+      ? editingArea.selectedCountries && editingArea.selectedCountries.length > 0
+        ? editingArea.selectedCountries
+        : editingArea.selectedCountry
+        ? [editingArea.selectedCountry]
+        : []
+      : [];
+
+  const editingConflictCountry = editingSelectedCountries.find((code) => {
+    const assigned = claimedCountriesMap.get(code);
+    return assigned && assigned !== editingArea?.name;
+  });
 
   // ============================================================================
   // HIERARCHICAL FALLBACK ENGINE MATCHING ALGORITHM (FITUR 4.4)
@@ -825,14 +871,20 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
         isSupported: false
       };
     } else {
-      // International Global Match (Single Country Match)
+      // International Global Match (Single or Multiple Country Match)
       const globalMatch = activeAreas.find((a) => {
         if (a.coverageType !== 'global') return false;
-        return a.selectedCountry === testerCountry;
+        const countries =
+          a.selectedCountries && a.selectedCountries.length > 0
+            ? a.selectedCountries
+            : a.selectedCountry
+            ? [a.selectedCountry]
+            : [];
+        return countries.includes(testerCountry);
       });
 
       if (globalMatch) {
-        const countryObj = GLOBAL_COUNTRIES.find((c) => c.code === testerCountry);
+        const countryObj = allCountries.find((c) => c.code === testerCountry);
         return {
           matchedArea: globalMatch,
           hierarchyLevel: 'Global International Coverage',
@@ -894,8 +946,7 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
 
   const handleOpenAddArea = () => {
     // Pick first available unclaimed country for global default
-    const firstAvailableCountry = GLOBAL_COUNTRIES.find((c) => !claimedCountriesMap.has(c.code))?.code || 'MY';
-    const countryObj = GLOBAL_COUNTRIES.find((c) => c.code === firstAvailableCountry);
+    const firstAvailableCountry = allCountries.find((c) => !claimedCountriesMap.has(c.code))?.code || 'MY';
 
     // Initial default preset carriers for new area (starts with standard 7-Eleven and Black Cat)
     const initialCarriers: CarrierConfig[] = [
@@ -935,6 +986,7 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
       isAllDistricts: true,
       selectedDistricts: [],
       selectedCountry: firstAvailableCountry,
+      selectedCountries: [firstAvailableCountry],
       carriers: initialCarriers
     };
 
@@ -944,34 +996,122 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
   };
 
   const handleOpenEditArea = (area: CoverageAreaItem) => {
-    const cloned = JSON.parse(JSON.stringify(area));
+    const cloned: CoverageAreaItem = JSON.parse(JSON.stringify(area));
+    if (!cloned.selectedCountries || cloned.selectedCountries.length === 0) {
+      if (cloned.selectedCountry) {
+        cloned.selectedCountries = [cloned.selectedCountry];
+      } else {
+        cloned.selectedCountries = [];
+      }
+    }
     setEditingArea(cloned);
     setInitialAreaSnapshot(JSON.stringify(cloned));
     setCurrentView('form');
   };
 
-  // Helper to handle country selection and automatically update the Area Name if not customized
-  const handleSelectCountry = (countryCode: string) => {
-    const countryObj = GLOBAL_COUNTRIES.find((c) => c.code === countryCode);
-    const cleanCountryName = countryObj ? countryObj.cleanName : '';
+  // Helper to add country to the global area and update the Area Name if not customized
+  const handleAddCountry = (countryCode: string) => {
+    if (!editingArea || !countryCode) return;
+    const current =
+      editingArea.selectedCountries && editingArea.selectedCountries.length > 0
+        ? [...editingArea.selectedCountries]
+        : editingArea.selectedCountry
+        ? [editingArea.selectedCountry]
+        : [];
 
-    setEditingArea((prev) => {
-      if (!prev) return null;
-      // Check if previous name was empty or matched a known country cleanName or default
-      const prevCountryObj = GLOBAL_COUNTRIES.find((c) => c.code === prev.selectedCountry);
-      const prevCleanName = prevCountryObj ? prevCountryObj.cleanName : '';
-      const isAutoName =
-        !prev.name.trim() ||
-        prev.name === prevCleanName ||
-        prev.name === 'New Global Area' ||
-        prev.name === 'Taiwan Domestic';
+    if (current.includes(countryCode)) return;
 
-      return {
-        ...prev,
-        selectedCountry: countryCode,
-        name: isAutoName && cleanCountryName ? cleanCountryName : prev.name
-      };
+    const nextCountries = [...current, countryCode];
+    const nextPrimary = nextCountries[0];
+
+    const isAutoName =
+      !editingArea.name.trim() ||
+      editingArea.name === 'New Global Area' ||
+      editingArea.name === 'Global Destination' ||
+      editingArea.name === 'Taiwan Domestic' ||
+      allCountries.some((c) => c.cleanName === editingArea.name || c.name === editingArea.name);
+
+    let nextName = editingArea.name;
+    if (isAutoName) {
+      if (nextCountries.length === 1) {
+        const cObj = allCountries.find((c) => c.code === nextCountries[0]);
+        nextName = cObj ? cObj.cleanName : 'Global Zone';
+      } else if (nextCountries.length <= 3) {
+        nextName = nextCountries
+          .map((c) => allCountries.find((item) => item.code === c)?.cleanName || c)
+          .join(', ');
+      } else {
+        const c1 = allCountries.find((item) => item.code === nextCountries[0])?.cleanName || nextCountries[0];
+        const c2 = allCountries.find((item) => item.code === nextCountries[1])?.cleanName || nextCountries[1];
+        nextName = `${c1}, ${c2} & ${nextCountries.length - 2} more`;
+      }
+    }
+
+    setEditingArea({
+      ...editingArea,
+      selectedCountry: nextPrimary,
+      selectedCountries: nextCountries,
+      name: nextName
     });
+  };
+
+  // Helper to remove country from the global area
+  const handleRemoveCountry = (countryCode: string) => {
+    if (!editingArea) return;
+    const current =
+      editingArea.selectedCountries && editingArea.selectedCountries.length > 0
+        ? [...editingArea.selectedCountries]
+        : editingArea.selectedCountry
+        ? [editingArea.selectedCountry]
+        : [];
+
+    const nextCountries = current.filter((c) => c !== countryCode);
+    const nextPrimary = nextCountries[0] || '';
+
+    setEditingArea({
+      ...editingArea,
+      selectedCountry: nextPrimary,
+      selectedCountries: nextCountries
+    });
+  };
+
+  // Helper to create a new custom destination country
+  const handleCreateCustomCountry = () => {
+    const trimmedName = newCountryName.trim();
+    if (!trimmedName) {
+      alert('Please enter a country name.');
+      return;
+    }
+
+    let code = newCountryCode.trim().toUpperCase();
+    if (!code) {
+      const clean = trimmedName.replace(/[^A-Za-z]/g, '').toUpperCase();
+      code = clean.slice(0, 3) || `C${Date.now().toString().slice(-3)}`;
+    }
+
+    if (allCountries.some((c) => c.code === code)) {
+      alert(`Country code "${code}" already exists. Please choose a unique country code.`);
+      return;
+    }
+
+    const cleanName = trimmedName.replace(/\s*\(.*?\)\s*/g, '').trim() || trimmedName;
+    const newCustomCountry: GlobalCountryDef = {
+      code,
+      name: trimmedName,
+      cleanName,
+      isCustom: true
+    };
+
+    setCustomCountries((prev) => [...prev, newCustomCountry]);
+
+    if (editingArea) {
+      handleAddCountry(code);
+    }
+
+    setNewCountryName('');
+    setNewCountryCode('');
+    setShowAddCustomCountryModal(false);
+    onShowToast(`Custom country "${trimmedName}" created and added to zone.`);
   };
 
   // Helper to handle local city selection and automatically update Area Name if not customized
@@ -1004,16 +1144,32 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
     }
 
     if (editingArea.coverageType === 'global') {
-      if (!editingArea.selectedCountry) {
-        alert('Please select a destination country for this Global area.');
+      const selected =
+        editingArea.selectedCountries && editingArea.selectedCountries.length > 0
+          ? editingArea.selectedCountries
+          : editingArea.selectedCountry
+          ? [editingArea.selectedCountry]
+          : [];
+
+      if (selected.length === 0) {
+        alert('Please select or add at least one destination country for this Global area.');
         return;
       }
-      // Conflict check
-      const assignedTo = claimedCountriesMap.get(editingArea.selectedCountry);
-      if (assignedTo && assignedTo !== editingArea.name) {
-        alert(`Conflict: This country is already assigned to "${assignedTo}". Please choose another country.`);
-        return;
+
+      // Conflict check across all countries in this area
+      for (const countryCode of selected) {
+        const assignedTo = claimedCountriesMap.get(countryCode);
+        if (assignedTo && assignedTo !== editingArea.name) {
+          const cObj = allCountries.find((c) => c.code === countryCode);
+          alert(
+            `Conflict: Country "${cObj?.name || countryCode}" is already assigned to active zone "${assignedTo}". Please remove it from this zone.`
+          );
+          return;
+        }
       }
+
+      editingArea.selectedCountry = selected[0];
+      editingArea.selectedCountries = selected;
     }
 
     if (editingArea.coverageType === 'local') {
@@ -1165,10 +1321,24 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
 
   // Filtered list for directory table
   const filteredAreas = coverageAreas.filter((a) => {
+    const countries =
+      a.selectedCountries && a.selectedCountries.length > 0
+        ? a.selectedCountries
+        : a.selectedCountry
+        ? [a.selectedCountry]
+        : [];
+    const countriesMatch = countries.some((c) => {
+      const cObj = allCountries.find((item) => item.code === c);
+      return (
+        c.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (cObj && cObj.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    });
+
     const matchSearch =
       a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       a.selectedCity.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (a.selectedCountry && a.selectedCountry.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      countriesMatch ||
       a.carriers.some((c) => c.carrierName.toLowerCase().includes(searchQuery.toLowerCase()));
 
     if (activeTab === 'local') return matchSearch && a.coverageType === 'local';
@@ -1180,11 +1350,39 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
   // Territory Summary helper
   const renderTerritorySummary = (area: CoverageAreaItem) => {
     if (area.coverageType === 'global') {
-      const countryObj = GLOBAL_COUNTRIES.find((c) => c.code === area.selectedCountry);
+      const countries =
+        area.selectedCountries && area.selectedCountries.length > 0
+          ? area.selectedCountries
+          : area.selectedCountry
+          ? [area.selectedCountry]
+          : [];
+
+      if (countries.length === 0) {
+        return <span className="text-gray-400 italic">No destination countries</span>;
+      }
+
+      if (countries.length === 1) {
+        const countryObj = allCountries.find((c) => c.code === countries[0]);
+        return (
+          <span className="font-semibold text-gray-800">
+            {countryObj ? countryObj.name : countries[0]}
+          </span>
+        );
+      }
+
       return (
-        <span className="font-semibold text-gray-800">
-          {countryObj ? countryObj.name : area.selectedCountry || 'Unspecified Country'}
-        </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="inline-flex items-center rounded-md bg-charcoal/10 text-charcoal px-2 py-0.5 text-[11px] font-extrabold">
+            {countries.length} Countries
+          </span>
+          <span className="text-gray-600 text-xs">
+            {countries
+              .map((code) => allCountries.find((c) => c.code === code)?.cleanName || code)
+              .slice(0, 3)
+              .join(', ')}
+            {countries.length > 3 ? ` +${countries.length - 3} more` : ''}
+          </span>
+        </div>
       );
     }
 
@@ -1515,9 +1713,9 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
                     className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 text-xs font-semibold focus:border-charcoal focus:outline-none cursor-pointer"
                   >
                     <option value="Taiwan">Taiwan (Domestic)</option>
-                    {GLOBAL_COUNTRIES.map((c) => (
+                    {allCountries.map((c) => (
                       <option key={c.code} value={c.code}>
-                        {c.name}
+                        {c.name} {c.isCustom ? '(Custom)' : ''}
                       </option>
                     ))}
                   </select>
@@ -1773,18 +1971,21 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block font-bold text-gray-700 uppercase mb-1">
-                Coverage Area Name <span className="text-rose-500">*</span>
-              </label>
+              <div className="flex items-center gap-1.5 mb-1">
+                <label className="block font-bold text-gray-700 uppercase">
+                  Coverage Area Name <span className="text-rose-500">*</span>
+                </label>
+                <AdminHelpIcon text="Internal label used exclusively in admin management to identify this shipping zone. Not displayed to customers." />
+              </div>
               <input
                 type="text"
                 value={editingArea.name}
                 onChange={(e) => setEditingArea({ ...editingArea, name: e.target.value })}
-                placeholder='e.g. "Malaysia", "Japan", "Taiwan Domestic"'
+                placeholder='e.g. "East Asia Zone", "Europe Express", "Taiwan Domestic"'
                 className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 text-xs sm:text-sm font-semibold text-gray-900 focus:border-charcoal focus:outline-none"
               />
               <span className="text-[10px] text-gray-500 mt-1 block">
-                Automatically defaults to the selected destination country or territory (customizable anytime).
+                Internal reference label for admin management only.
               </span>
             </div>
 
@@ -1816,13 +2017,24 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
                 <button
                   type="button"
                   onClick={() => {
-                    const countryObj = GLOBAL_COUNTRIES.find((c) => c.code === (editingArea.selectedCountry || 'MY'));
-                    const cleanName = countryObj ? countryObj.cleanName : 'Global Destination';
+                    const existingCountries =
+                      editingArea.selectedCountries && editingArea.selectedCountries.length > 0
+                        ? editingArea.selectedCountries
+                        : editingArea.selectedCountry
+                        ? [editingArea.selectedCountry]
+                        : [];
+                    const initialCountries =
+                      existingCountries.length > 0
+                        ? existingCountries
+                        : [allCountries.find((c) => !claimedCountriesMap.has(c.code))?.code || 'MY'];
+                    const primaryCountryObj = allCountries.find((c) => c.code === initialCountries[0]);
+                    const cleanName = primaryCountryObj ? primaryCountryObj.cleanName : 'Global Destination';
                     setEditingArea({
                       ...editingArea,
                       coverageType: 'global',
-                      selectedCountry: editingArea.selectedCountry || 'MY',
-                      name: cleanName
+                      selectedCountry: initialCountries[0],
+                      selectedCountries: initialCountries,
+                      name: editingArea.name === 'Taiwan Domestic' ? cleanName : editingArea.name
                     });
                   }}
                   className={`inline-flex items-center justify-center gap-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
@@ -1836,7 +2048,7 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
                 </button>
               </div>
               <span className="text-[10px] text-gray-500 mt-1 block">
-                Local covers Taiwan 22 divisions; Global configures single destination countries.
+                Local covers Taiwan 22 divisions; Global configures multiple international destination countries per zone.
               </span>
             </div>
           </div>
@@ -1851,55 +2063,125 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
             </h2>
           </div>
 
-          {/* GLOBAL CONFIGURATION: SINGLE COUNTRY DROPDOWN WITH AUTO-NAME & CONFLICT PROTECTION */}
+          {/* GLOBAL CONFIGURATION: MULTIPLE DESTINATION COUNTRIES + CUSTOM COUNTRY CREATION */}
           {editingArea.coverageType === 'global' ? (
-            <div className="space-y-3 text-xs">
+            <div className="space-y-4 text-xs">
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="font-bold text-gray-700 uppercase">
-                    Destination Country (Single Country per Entry) <span className="text-rose-500">*</span>
-                  </label>
+                <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <label className="font-bold text-gray-700 uppercase">
+                      Destination Countries (Multiple Global Countries) <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-extrabold text-gray-600">
+                      {editingSelectedCountries.length}{' '}
+                      {editingSelectedCountries.length === 1 ? 'Country' : 'Countries'}
+                    </span>
+                  </div>
                   <span className="text-[10px] text-gray-500 font-medium flex items-center gap-1">
                     <Sparkles className="h-3 w-3 text-amber-500" />
                     <span>Auto-syncs Area Name</span>
                   </span>
                 </div>
 
-                <div className="relative w-full sm:w-96">
-                  <select
-                    value={editingArea.selectedCountry || ''}
-                    onChange={(e) => handleSelectCountry(e.target.value)}
-                    className="w-full h-11 rounded-xl border border-gray-300 bg-white px-3.5 text-xs sm:text-sm font-semibold text-gray-900 focus:border-charcoal focus:outline-none cursor-pointer"
-                  >
-                    <option value="">-- Select a Destination Country --</option>
-                    {GLOBAL_COUNTRIES.map((country) => {
-                      const assignedAreaName = claimedCountriesMap.get(country.code);
-                      const isAssigned = !!assignedAreaName && assignedAreaName !== editingArea.name;
-                      return (
-                        <option
-                          key={country.code}
-                          value={country.code}
-                          disabled={isAssigned}
-                          className={isAssigned ? 'text-gray-400 bg-gray-50' : 'text-gray-900'}
-                        >
-                          {country.name} {isAssigned ? `(Already assigned to: "${assignedAreaName}")` : ''}
-                        </option>
-                      );
-                    })}
-                  </select>
+                {/* Selected Countries Tag Container */}
+                <div className="p-3 rounded-2xl border border-gray-200 bg-gray-50/70 min-h-[52px] mb-3">
+                  {editingSelectedCountries.length > 0 ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {editingSelectedCountries.map((code) => {
+                        const countryObj = allCountries.find((c) => c.code === code);
+                        const isCustom = countryObj?.isCustom;
+                        return (
+                          <span
+                            key={code}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-900 shadow-2xs group hover:border-gray-300 transition-all"
+                          >
+                            <Globe className="h-3.5 w-3.5 text-charcoal/70" />
+                            <span>{countryObj ? countryObj.name : code}</span>
+                            {isCustom && (
+                              <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-extrabold border border-amber-200">
+                                Custom
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCountry(code)}
+                              className="text-gray-400 hover:text-rose-600 p-0.5 rounded-md hover:bg-rose-50 cursor-pointer transition-colors"
+                              title={`Remove ${countryObj?.cleanName || code}`}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-amber-800 text-xs py-1">
+                      <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                      <span>No destination countries selected yet. Add at least one country below.</span>
+                    </div>
+                  )}
                 </div>
-                <p className="text-[11px] text-gray-500 mt-1.5">
-                  Select the country for this export zone. Selecting a country automatically updates the Area Name above. Countries already assigned to another active area are disabled to prevent rate conflicts.
+
+                {/* Country Picker & Custom Country Controls */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <div className="relative flex-1">
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleAddCountry(e.target.value);
+                        }
+                      }}
+                      className="w-full h-11 rounded-xl border border-gray-300 bg-white px-3.5 text-xs sm:text-sm font-semibold text-gray-900 focus:border-charcoal focus:outline-none cursor-pointer"
+                    >
+                      <option value="">+ Add a Destination Country...</option>
+                      {allCountries.map((country) => {
+                        const isSelectedInCurrent = editingSelectedCountries.includes(country.code);
+                        const assignedAreaName = claimedCountriesMap.get(country.code);
+                        const isAssignedToOther = !!assignedAreaName && assignedAreaName !== editingArea.name;
+                        const isDisabled = isSelectedInCurrent || isAssignedToOther;
+
+                        return (
+                          <option
+                            key={country.code}
+                            value={country.code}
+                            disabled={isDisabled}
+                            className={isDisabled ? 'text-gray-400 bg-gray-50' : 'text-gray-900'}
+                          >
+                            {country.name}
+                            {isSelectedInCurrent
+                              ? ' (Already in zone)'
+                              : isAssignedToOther
+                              ? ` (Assigned to: "${assignedAreaName}")`
+                              : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAddCustomCountryModal(true)}
+                    className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 hover:border-charcoal text-xs font-bold text-gray-800 transition-all cursor-pointer shadow-2xs shrink-0"
+                  >
+                    <Plus className="h-4 w-4 text-charcoal" />
+                    <span>Add Custom Country</span>
+                  </button>
+                </div>
+
+                <p className="text-[11px] text-gray-500 mt-2">
+                  Add one or multiple destination countries to this international shipping zone. Rates and carriers configured below will apply to all selected countries in this zone. Countries already assigned to another active area are protected from conflicts.
                 </p>
               </div>
 
-              {/* Conflict Status Display if selected country is already claimed */}
-              {editingArea.selectedCountry && claimedCountriesMap.get(editingArea.selectedCountry) && (
+              {/* Conflict Status Display if any selected country is already claimed by another active area */}
+              {editingConflictCountry && (
                 <div className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/70 text-amber-900 flex items-center gap-2.5">
                   <Lock className="h-4 w-4 text-amber-700 shrink-0" />
                   <span className="text-xs">
-                    This country is already active under zone &ldquo;
-                    <strong>{claimedCountriesMap.get(editingArea.selectedCountry)}</strong>&rdquo;. Please choose an unclaimed country or edit that existing area.
+                    Country &ldquo;<strong>{allCountries.find((c) => c.code === editingConflictCountry)?.name || editingConflictCountry}</strong>&rdquo; is already active under zone &ldquo;
+                    <strong>{claimedCountriesMap.get(editingConflictCountry)}</strong>&rdquo;. Please remove it to avoid rate conflicts.
                   </span>
                 </div>
               )}
@@ -2777,6 +3059,93 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
                   </button>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: ADD CUSTOM DESTINATION COUNTRY */}
+      {showAddCustomCountryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-xl border border-gray-200 max-w-md w-full p-6 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-charcoal">
+                  <Globe className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Add Custom Destination Country</h3>
+                  <p className="text-[11px] text-gray-500">Define a new international destination country</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddCustomCountryModal(false);
+                  setNewCountryName('');
+                  setNewCountryCode('');
+                }}
+                className="text-gray-400 hover:text-gray-700 p-1 rounded-lg cursor-pointer transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 uppercase mb-1">
+                  Country Name (Local &amp; English) <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newCountryName}
+                  onChange={(e) => setNewCountryName(e.target.value)}
+                  placeholder="e.g. Netherlands (荷蘭) or Spain (西班牙)"
+                  className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 font-semibold text-gray-900 focus:border-charcoal focus:outline-none"
+                  autoFocus
+                />
+                <span className="text-[10px] text-gray-400 mt-1 block">
+                  The primary label displayed across storefront shipping options and invoice previews.
+                </span>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 uppercase mb-1">
+                  Country Code <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={newCountryCode}
+                  onChange={(e) => setNewCountryCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. NL, ES, IT"
+                  className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 font-mono font-bold uppercase text-gray-900 focus:border-charcoal focus:outline-none"
+                />
+                <span className="text-[10px] text-gray-400 mt-1 block">
+                  2-letter ISO country code.
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddCustomCountryModal(false);
+                  setNewCountryName('');
+                  setNewCountryCode('');
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateCustomCountry}
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-charcoal hover:bg-black text-white cursor-pointer transition-all shadow-xs"
+              >
+                Save &amp; Add Country
+              </button>
             </div>
           </div>
         </div>
