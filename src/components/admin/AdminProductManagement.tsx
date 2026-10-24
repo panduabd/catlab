@@ -1501,212 +1501,222 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
             </div>
           </div>
         </div>
-      ) : (
-        /* ========================================================================= */
-        /* VIEW 2: PRODUCT DETAIL / EDITOR VIEW (UNIFIED 2-COLUMN LAYOUT)             */
-        /* ========================================================================= */
-        currentEditingProduct && (() => {
-          const totalStockSynced = currentEditingProduct.variants.reduce(
-            (acc, v) => acc + (Number(v.stock) || 0),
-            0
-          );
-          const accumulatedDim =
-            (Number(currentEditingProduct.lengthCm) || 0) +
-            (Number(currentEditingProduct.widthCm) || 0) +
-            (Number(currentEditingProduct.heightCm) || 0);
-          const volumetricWeight = (
-            ((Number(currentEditingProduct.lengthCm) || 0) *
-              (Number(currentEditingProduct.widthCm) || 0) *
-              (Number(currentEditingProduct.heightCm) || 0)) /
-            6000
-          ).toFixed(2);
-          const maxSide = Math.max(
-            Number(currentEditingProduct.lengthCm) || 0,
-            Number(currentEditingProduct.widthCm) || 0,
-            Number(currentEditingProduct.heightCm) || 0
-          );
-          const isCvsEligible =
-            accumulatedDim <= 105 &&
-            maxSide <= 45 &&
-            (Number(currentEditingProduct.weightGram) || 0) <= 5000;
+      </div>
+    );
+  }
 
-          return (
-            <div className="space-y-6">
-              {/* Sticky Floating Top Header Navigation & Action Bar */}
-              <div className="sticky top-0 z-30 -mt-2 py-3 px-4 sm:px-6 -mx-4 sm:-mx-6 bg-white/95 backdrop-blur-md border-b border-gray-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setEditingProductId(null)}
-                    className="inline-flex items-center gap-2 text-xs font-bold text-gray-700 hover:text-charcoal cursor-pointer group transition-colors py-1.5 px-2.5 rounded-xl hover:bg-gray-100"
-                  >
-                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-                    <span>Back to Products List</span>
-                  </button>
-                  <span className="text-gray-300">|</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200">
-                      {currentEditingProduct.sku}
-                    </span>
-                    <span
-                      className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold border ${
-                        currentEditingProduct.status === 'Active'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
-                          : 'bg-gray-100 text-gray-600 border-gray-300'
-                      }`}
-                    >
-                      {currentEditingProduct.status}
-                    </span>
-                  </div>
-                </div>
+  // =========================================================================
+  // VIEW 2: PRODUCT DETAIL / EDITOR VIEW (UNIFIED 2-COLUMN LAYOUT)
+  // =========================================================================
+  if (!currentEditingProduct) return null;
 
-                <div className="flex items-center gap-2.5 self-end sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => setEditingProductId(null)}
-                    className="rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                  >
-                    Discard
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!currentEditingProduct.name.trim()) {
-                        onShowToast('Validation error: Product Title is required.');
-                        setActiveDetailTab('general');
-                        return;
-                      }
-                      if (!currentEditingProduct.category.trim()) {
-                        onShowToast('Validation error: Category is required.');
-                        setActiveDetailTab('general');
-                        return;
-                      }
-                      if (!currentEditingProduct.sku.trim()) {
-                        onShowToast('Validation error: Master SKU is required.');
-                        setActiveDetailTab('general');
-                        return;
-                      }
-                      if (!currentEditingProduct.basePrice || currentEditingProduct.basePrice <= 0) {
-                        onShowToast('Validation error: Base Price (Sale Price) is required and must be greater than 0.');
-                        return;
-                      }
-                      if (!currentEditingProduct.weightGram || currentEditingProduct.weightGram <= 0) {
-                        onShowToast('Validation error: Shipping Weight in grams is required.');
-                        return;
-                      }
-                      if (
-                        !currentEditingProduct.lengthCm ||
-                        !currentEditingProduct.widthCm ||
-                        !currentEditingProduct.heightCm ||
-                        currentEditingProduct.lengthCm <= 0 ||
-                        currentEditingProduct.widthCm <= 0 ||
-                        currentEditingProduct.heightCm <= 0
-                      ) {
-                        onShowToast('Validation error: Shipping Dimensions (L × W × H) are required.');
-                        return;
-                      }
-                      if (!currentEditingProduct.images || currentEditingProduct.images.length === 0) {
-                        onShowToast('Validation error: Media Gallery requires at least 1 image or video.');
-                        setActiveDetailTab('media');
-                        return;
-                      }
-                      onShowToast(`All changes for ${currentEditingProduct.sku} saved successfully.`);
-                      setEditingProductId(null);
-                    }}
-                    className="inline-flex items-center gap-2 rounded-xl bg-yellow hover:bg-yellow/90 text-charcoal px-5 py-2 text-xs font-bold shadow-xs transition-all active:scale-[0.99] cursor-pointer"
-                  >
-                    <Save className="h-4 w-4 text-charcoal" />
-                    <span>Save Changes</span>
-                  </button>
-                </div>
-              </div>
+  const totalStockSynced = currentEditingProduct.variants.reduce(
+    (acc, v) => acc + (Number(v.stock) || 0),
+    0
+  );
+  const accumulatedDim =
+    (Number(currentEditingProduct.lengthCm) || 0) +
+    (Number(currentEditingProduct.widthCm) || 0) +
+    (Number(currentEditingProduct.heightCm) || 0);
+  const volumetricWeight = (
+    ((Number(currentEditingProduct.lengthCm) || 0) *
+      (Number(currentEditingProduct.widthCm) || 0) *
+      (Number(currentEditingProduct.heightCm) || 0)) /
+    6000
+  ).toFixed(2);
+  const maxSide = Math.max(
+    Number(currentEditingProduct.lengthCm) || 0,
+    Number(currentEditingProduct.widthCm) || 0,
+    Number(currentEditingProduct.heightCm) || 0
+  );
+  const isCvsEligible =
+    accumulatedDim <= 105 &&
+    maxSide <= 45 &&
+    (Number(currentEditingProduct.weightGram) || 0) <= 5000;
 
-              {/* UntitledUI Segmented Pill Tabs Navigation Bar */}
-              <div className="relative sm:sticky sm:top-[58px] z-20 bg-[#fcfcfd]/95 backdrop-blur-md py-2.5 -mx-2 px-2 flex items-center transition-all border-b border-gray-100">
-                <div className="inline-flex flex-wrap items-center p-1 rounded-2xl bg-gray-100/90 border border-gray-200 shadow-2xs gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setActiveDetailTab('general')}
-                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                      activeDetailTab === 'general'
-                        ? 'bg-white text-gray-900 font-bold shadow-xs border border-gray-200/80'
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-white/50 border border-transparent'
-                    }`}
-                  >
-                    <FileText className={`h-4 w-4 ${activeDetailTab === 'general' ? 'text-charcoal' : 'text-gray-400'}`} />
-                    <span>General Info</span>
-                  </button>
+  return (
+    <div className="min-h-screen pb-16 animate-in fade-in duration-200">
+      {/* Sticky Floating Full-Bleed Top Header Navigation & Action Bar */}
+      <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-2xs w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setEditingProductId(null)}
+              className="inline-flex items-center gap-2 text-xs font-bold text-gray-700 hover:text-charcoal cursor-pointer group transition-colors py-1.5 px-2.5 rounded-xl hover:bg-gray-100"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+              <span>Back to Products List</span>
+            </button>
+            <span className="text-gray-300">|</span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200">
+                {currentEditingProduct.sku}
+              </span>
+              <span
+                className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold border ${
+                  currentEditingProduct.status === 'Active'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                    : 'bg-gray-100 text-gray-600 border-gray-300'
+                }`}
+              >
+                {currentEditingProduct.status}
+              </span>
+            </div>
+          </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setActiveDetailTab('media')}
-                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                      activeDetailTab === 'media'
-                        ? 'bg-white text-gray-900 font-bold shadow-xs border border-gray-200/80'
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-white/50 border border-transparent'
-                    }`}
-                  >
-                    <ImageIcon className={`h-4 w-4 ${activeDetailTab === 'media' ? 'text-charcoal' : 'text-gray-400'}`} />
-                    <span>Media Gallery</span>
-                    <span
-                      className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold border transition-colors ${
-                        activeDetailTab === 'media'
-                          ? 'bg-gray-100 text-gray-800 border-gray-200'
-                          : 'bg-white/80 text-gray-500 border-gray-200/60'
-                      }`}
-                    >
-                      {currentEditingProduct.images.length}
-                    </span>
-                  </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              disabled={!isProductDirty}
+              onClick={() => {
+                if (!isProductDirty) return;
+                if (!currentEditingProduct.name.trim()) {
+                  onShowToast('Validation error: Product Title is required.');
+                  setActiveDetailTab('general');
+                  return;
+                }
+                if (!currentEditingProduct.category.trim()) {
+                  onShowToast('Validation error: Category is required.');
+                  setActiveDetailTab('general');
+                  return;
+                }
+                if (!currentEditingProduct.sku.trim()) {
+                  onShowToast('Validation error: Master SKU is required.');
+                  setActiveDetailTab('general');
+                  return;
+                }
+                if (!currentEditingProduct.basePrice || currentEditingProduct.basePrice <= 0) {
+                  onShowToast('Validation error: Base Price (Sale Price) is required and must be greater than 0.');
+                  return;
+                }
+                if (!currentEditingProduct.weightGram || currentEditingProduct.weightGram <= 0) {
+                  onShowToast('Validation error: Shipping Weight in grams is required.');
+                  return;
+                }
+                if (
+                  !currentEditingProduct.lengthCm ||
+                  !currentEditingProduct.widthCm ||
+                  !currentEditingProduct.heightCm ||
+                  currentEditingProduct.lengthCm <= 0 ||
+                  currentEditingProduct.widthCm <= 0 ||
+                  currentEditingProduct.heightCm <= 0
+                ) {
+                  onShowToast('Validation error: Shipping Dimensions (L × W × H) are required.');
+                  return;
+                }
+                if (!currentEditingProduct.images || currentEditingProduct.images.length === 0) {
+                  onShowToast('Validation error: Media Gallery requires at least 1 image or video.');
+                  setActiveDetailTab('media');
+                  return;
+                }
+                onShowToast(`All changes for ${currentEditingProduct.sku} saved successfully.`);
+                setInitialProductSnapshot(JSON.stringify(currentEditingProduct));
+                setEditingProductId(null);
+              }}
+              className={`inline-flex items-center gap-2 rounded-xl px-5 py-2 text-xs font-bold transition-all ${
+                isProductDirty
+                  ? 'bg-yellow hover:bg-yellow/90 text-charcoal shadow-xs cursor-pointer active:scale-[0.99]'
+                  : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed opacity-60'
+              }`}
+            >
+              <Save className={`h-4 w-4 ${isProductDirty ? 'text-charcoal' : 'text-gray-400'}`} />
+              <span>Save Changes</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setActiveDetailTab('variants')}
-                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                      activeDetailTab === 'variants'
-                        ? 'bg-white text-gray-900 font-bold shadow-xs border border-gray-200/80'
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-white/50 border border-transparent'
-                    }`}
-                  >
-                    <Layers className={`h-4 w-4 ${activeDetailTab === 'variants' ? 'text-charcoal' : 'text-gray-400'}`} />
-                    <span>Product Variants</span>
-                    <span
-                      className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold border transition-colors ${
-                        activeDetailTab === 'variants'
-                          ? 'bg-gray-100 text-gray-800 border-gray-200'
-                          : 'bg-white/80 text-gray-500 border-gray-200/60'
-                      }`}
-                    >
-                      {currentEditingProduct.variants.length}
-                    </span>
-                  </button>
+      {/* Sticky Full-Bleed Tabs Navigation Bar */}
+      <div className="sticky top-16 z-20 bg-white/95 backdrop-blur-md border-b border-gray-200/80 shadow-2xs w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 py-2.5 flex items-center">
+          <div className="inline-flex flex-wrap items-center p-1 rounded-2xl bg-gray-100/90 border border-gray-200 shadow-2xs gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveDetailTab('general')}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                activeDetailTab === 'general'
+                  ? 'bg-white text-gray-900 font-bold shadow-xs border border-gray-200/80'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-white/50 border border-transparent'
+              }`}
+            >
+              <FileText className={`h-4 w-4 ${activeDetailTab === 'general' ? 'text-charcoal' : 'text-gray-400'}`} />
+              <span>General Info</span>
+            </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setActiveDetailTab('accordions')}
-                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                      activeDetailTab === 'accordions'
-                        ? 'bg-white text-gray-900 font-bold shadow-xs border border-gray-200/80'
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-white/50 border border-transparent'
-                    }`}
-                  >
-                    <List className={`h-4 w-4 ${activeDetailTab === 'accordions' ? 'text-charcoal' : 'text-gray-400'}`} />
-                    <span>Content Accordions</span>
-                    <span
-                      className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold border transition-colors ${
-                        activeDetailTab === 'accordions'
-                          ? 'bg-gray-100 text-gray-800 border-gray-200'
-                          : 'bg-white/80 text-gray-500 border-gray-200/60'
-                      }`}
-                    >
-                      {currentEditingProduct.accordions.length}
-                    </span>
-                  </button>
-                </div>
-              </div>
+            <button
+              type="button"
+              onClick={() => setActiveDetailTab('media')}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                activeDetailTab === 'media'
+                  ? 'bg-white text-gray-900 font-bold shadow-xs border border-gray-200/80'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-white/50 border border-transparent'
+              }`}
+            >
+              <ImageIcon className={`h-4 w-4 ${activeDetailTab === 'media' ? 'text-charcoal' : 'text-gray-400'}`} />
+              <span>Media Gallery</span>
+              <span
+                className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold border transition-colors ${
+                  activeDetailTab === 'media'
+                    ? 'bg-gray-100 text-gray-800 border-gray-200'
+                    : 'bg-white/80 text-gray-500 border-gray-200/60'
+                }`}
+              >
+                {currentEditingProduct.images.length}
+              </span>
+            </button>
 
-              {/* 2-Column Unified Editor Layout */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <button
+              type="button"
+              onClick={() => setActiveDetailTab('variants')}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                activeDetailTab === 'variants'
+                  ? 'bg-white text-gray-900 font-bold shadow-xs border border-gray-200/80'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-white/50 border border-transparent'
+              }`}
+            >
+              <Layers className={`h-4 w-4 ${activeDetailTab === 'variants' ? 'text-charcoal' : 'text-gray-400'}`} />
+              <span>Product Variants</span>
+              <span
+                className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold border transition-colors ${
+                  activeDetailTab === 'variants'
+                    ? 'bg-gray-100 text-gray-800 border-gray-200'
+                    : 'bg-white/80 text-gray-500 border-gray-200/60'
+                }`}
+              >
+                {currentEditingProduct.variants.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveDetailTab('accordions')}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                activeDetailTab === 'accordions'
+                  ? 'bg-white text-gray-900 font-bold shadow-xs border border-gray-200/80'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-white/50 border border-transparent'
+              }`}
+            >
+              <List className={`h-4 w-4 ${activeDetailTab === 'accordions' ? 'text-charcoal' : 'text-gray-400'}`} />
+              <span>Content Accordions</span>
+              <span
+                className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold border transition-colors ${
+                  activeDetailTab === 'accordions'
+                    ? 'bg-gray-100 text-gray-800 border-gray-200'
+                    : 'bg-white/80 text-gray-500 border-gray-200/60'
+                }`}
+              >
+                {currentEditingProduct.accordions.length}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Form Body with standard padding */}
+      <div className="p-4 sm:p-8 lg:p-10 max-w-7xl w-full mx-auto space-y-6">
+        {/* 2-Column Unified Editor Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* ================================================================= */}
                 {/* LEFT COLUMN: Main Product Details (8 Cols - Floating Sticky)     */}
                 {/* ================================================================= */}
@@ -3391,10 +3401,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                   </div>
                 </div>
               )}
-            </div>
-          );
-        })()
-      )}
-    </div>
-  );
-};
+        </div>
+      </div>
+    );
+  };
