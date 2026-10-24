@@ -7,6 +7,62 @@ interface ProductDetailPageProps {
   onNavigate: (view: 'home' | 'catalog' | 'product' | 'contact' | 'checkout', anchor?: string) => void;
 }
 
+export interface ProductVariantOption {
+  id: string;
+  nameEn: string;
+  nameZh: string;
+  sku: string;
+  priceEn: number;
+  priceZh: number;
+  originalPriceEn?: number;
+  originalPriceZh?: number;
+  stock: number;
+  image: string;
+  galleryIndex: number;
+}
+
+export const PRODUCT_VARIANTS: ProductVariantOption[] = [
+  {
+    id: 'var-1',
+    nameEn: 'Complete 10-Param Kit',
+    nameZh: '完整套裝（10項試紙）',
+    sku: 'CLP-KIT-10P',
+    priceEn: 29.0,
+    priceZh: 890,
+    originalPriceEn: 35.0,
+    originalPriceZh: 1080,
+    stock: 95,
+    image: '/images/product.webp',
+    galleryIndex: 1
+  },
+  {
+    id: 'var-2',
+    nameEn: 'Double Pack (2x Kits)',
+    nameZh: '雙入超值組（2套）',
+    sku: 'CLP-KIT-2PK',
+    priceEn: 52.0,
+    priceZh: 1680,
+    originalPriceEn: 70.0,
+    originalPriceZh: 2160,
+    stock: 35,
+    image: '/images/product-front.webp',
+    galleryIndex: 0
+  },
+  {
+    id: 'var-3',
+    nameEn: 'Refill Pack (Sand + Strips)',
+    nameZh: '疏水砂補充包（5份）',
+    sku: 'CLP-RFL-STD',
+    priceEn: 18.0,
+    priceZh: 520,
+    originalPriceEn: 22.0,
+    originalPriceZh: 650,
+    stock: 0, // Disabled / Sold Out example
+    image: '/images/step-4.webp',
+    galleryIndex: 2
+  }
+];
+
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate }) => {
   const { language, t } = useLanguage();
   const { addToCart, openCart } = useCart();
@@ -49,6 +105,16 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+
+  // Variant Selection State
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariantOption>(PRODUCT_VARIANTS[0]);
+
+  const handleSelectVariant = (variant: ProductVariantOption) => {
+    setSelectedVariant(variant);
+    if (variant.galleryIndex !== undefined && galleryImages[variant.galleryIndex]) {
+      setActiveImageIndex(variant.galleryIndex);
+    }
+  };
 
   // Quantity Stepper
   const [quantity, setQuantity] = useState(1);
@@ -103,16 +169,19 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
 
   // Cart Add Action
   const handleAddToCart = (openDrawer = true) => {
+    const variantName = language === 'en' ? selectedVariant.nameEn : selectedVariant.nameZh;
     addToCart(
       {
-        id: 'catlab-collection-kit',
+        id: `catlab-collection-kit-${selectedVariant.id}`,
         titleEn: 'CAT LAB+ Hydrophobic Cat Litter Kit',
         titleZh: 'CAT LAB+ 疏水性貓砂採集套裝',
-        subtitleEn: 'Complete home kit with 10-parameter test strip foil pack',
-        subtitleZh: '完整家庭採尿套裝，附10項尿液檢測試紙鋁箔包',
-        priceEn: 29.0,
-        priceZh: 890,
-        image: '/images/product.webp'
+        subtitleEn: selectedVariant.nameEn,
+        subtitleZh: selectedVariant.nameZh,
+        priceEn: selectedVariant.priceEn,
+        priceZh: selectedVariant.priceZh,
+        image: selectedVariant.image,
+        variant: variantName,
+        variantId: selectedVariant.id
       },
       quantity
     );
@@ -128,16 +197,19 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
   };
 
   const handleOpenBuyNow = () => {
+    const variantName = language === 'en' ? selectedVariant.nameEn : selectedVariant.nameZh;
     addToCart(
       {
-        id: 'catlab-collection-kit',
+        id: `catlab-collection-kit-${selectedVariant.id}`,
         titleEn: 'CAT LAB+ Hydrophobic Cat Litter Kit',
         titleZh: 'CAT LAB+ 疏水性貓砂採集套裝',
-        subtitleEn: 'Complete at-home urine collection kit with 10-parameter test strip',
-        subtitleZh: '完整家庭採尿套裝，附10項尿液檢測試紙鋁箔包',
-        priceEn: pdp.priceAmount,
-        priceZh: 890,
-        image: '/images/product.webp'
+        subtitleEn: selectedVariant.nameEn,
+        subtitleZh: selectedVariant.nameZh,
+        priceEn: selectedVariant.priceEn,
+        priceZh: selectedVariant.priceZh,
+        image: selectedVariant.image,
+        variant: variantName,
+        variantId: selectedVariant.id
       },
       quantity
     );
@@ -148,11 +220,20 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   const currencySymbol = language === 'en' ? '$' : 'NT$ ';
-  const unitPrice = language === 'en' ? pdp.priceAmount : 890;
-  const unitOriginalPrice = language === 'en' ? 35.0 : 1080;
+  const unitPrice = language === 'en' ? selectedVariant.priceEn : selectedVariant.priceZh;
+  const unitOriginalPrice = selectedVariant.originalPriceEn
+    ? (language === 'en' ? selectedVariant.originalPriceEn : selectedVariant.originalPriceZh!)
+    : null;
   const totalPrice = unitPrice * quantity;
-  const totalOriginalPrice = unitOriginalPrice * quantity;
-  const originalPriceDisplay = pdp.originalPriceDisplay || (language === 'en' ? '$35.00' : 'NT$ 1,080');
+  const totalOriginalPrice = unitOriginalPrice ? unitOriginalPrice * quantity : null;
+
+  const currentPriceDisplay = language === 'en'
+    ? `$${selectedVariant.priceEn.toFixed(2)}`
+    : `NT$ ${selectedVariant.priceZh.toLocaleString()}`;
+
+  const currentOriginalPriceDisplay = unitOriginalPrice
+    ? (language === 'en' ? `$${selectedVariant.originalPriceEn!.toFixed(2)}` : `NT$ ${selectedVariant.originalPriceZh!.toLocaleString()}`)
+    : null;
 
   return (
     <div className="min-h-screen bg-[#fcfcfd] text-gray-900 antialiased selection:bg-yellow/30">
@@ -171,7 +252,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
           <div>
             <p className="text-sm font-semibold text-gray-900">{pdp.addedToCart}</p>
             <p className="text-xs text-gray-500">
-              {quantity} × {pdp.priceDisplay}
+              {quantity} × {currentPriceDisplay} • {language === 'en' ? selectedVariant.nameEn : selectedVariant.nameZh}
             </p>
           </div>
         </div>
@@ -300,23 +381,87 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
               </p>
             </div>
 
-            {/* Price Box - Price with Strikethrough Original Price */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs">
+            {/* Price Box - Clean Price without In-Stock Badge & Minimalist Horizontal Variants */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-xs space-y-5">
               <div className="flex items-baseline gap-3">
                 <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
-                  {pdp.priceDisplay}
+                  {currentPriceDisplay}
                 </span>
-                {originalPriceDisplay && (
+                {currentOriginalPriceDisplay && (
                   <span className="text-base sm:text-lg text-gray-400 line-through font-medium">
-                    {originalPriceDisplay}
+                    {currentOriginalPriceDisplay}
                   </span>
                 )}
               </div>
 
-              {/* Quantity Stepper & Buttons */}
-              <div className="mt-6 pt-5 border-t border-gray-100 space-y-4">
-                <div className="flex items-center">
-                  {/* Untitled UI Stepper Input Group */}
+              {/* Variant Selection Option (DIRECTLY ABOVE QUANTITY BUTTON - MINI COMPACT SWATCHES MATCHING REFERENCE) */}
+              {PRODUCT_VARIANTS.length > 1 && (
+                <div className="pt-3 border-t border-gray-100">
+                  {/* Horizontal Compact Mini Cards aligned left with uniform height */}
+                  <div className="flex items-stretch gap-2.5 sm:gap-3 flex-wrap">
+                    {PRODUCT_VARIANTS.map((v) => {
+                      const isSelected = selectedVariant.id === v.id;
+                      const isOutOfStock = v.stock <= 0;
+                      const variantName = language === 'en' ? v.nameEn : v.nameZh;
+
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          disabled={isOutOfStock}
+                          onClick={() => !isOutOfStock && handleSelectVariant(v)}
+                          className={`group relative w-[86px] sm:w-[94px] h-[126px] sm:h-[132px] flex flex-col items-center justify-between p-1.5 sm:p-2 rounded-xl border text-center transition-all ${
+                            isOutOfStock
+                              ? 'border-gray-200 bg-gray-50/50 opacity-40 cursor-not-allowed select-none'
+                              : isSelected
+                              ? 'border-yellow bg-yellow/15 cursor-pointer'
+                              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/60 cursor-pointer'
+                          }`}
+                        >
+                          {/* Mini Thumbnail */}
+                          <div className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden mb-1">
+                            <img
+                              src={v.image}
+                              alt={variantName}
+                              className={`max-h-full max-w-full object-contain transition-transform duration-200 ${
+                                isOutOfStock
+                                  ? 'grayscale opacity-60'
+                                  : isSelected
+                                  ? 'scale-105'
+                                  : 'group-hover:scale-105'
+                              }`}
+                            />
+                            {isOutOfStock && (
+                              <span className="absolute bottom-0 inset-x-0 mx-auto w-max max-w-[90%] text-[8px] font-bold text-white bg-gray-900/80 rounded px-1.5 py-0.5 tracking-wide leading-none shadow-xs backdrop-blur-xs">
+                                {language === 'en' ? 'Sold Out' : '已售完'}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Title (uniform height across all cards) */}
+                          <div className="w-full shrink-0 flex items-center justify-center min-h-[30px]">
+                            <p
+                              className={`text-[9.5px] sm:text-[10px] leading-tight line-clamp-2 text-center ${
+                                isSelected
+                                  ? 'font-bold text-gray-900'
+                                  : isOutOfStock
+                                  ? 'font-medium text-gray-400'
+                                  : 'font-medium text-gray-700'
+                              }`}
+                            >
+                              {variantName}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Quantity Stepper & Buttons (No bottom border line under variants) */}
+              <div className="pt-1 space-y-4">
+                <div>
                   <div className="inline-flex items-center rounded-xl border border-gray-300 bg-white shadow-2xs">
                     <button
                       type="button"
@@ -707,7 +852,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-white p-1">
               <img
-                src="/images/product-front.webp"
+                src={selectedVariant.image}
                 alt="CAT LAB+ Kit"
                 className="h-full w-full object-contain"
               />
@@ -716,6 +861,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
               <h4 className="text-xs font-bold text-gray-900 truncate max-w-xs md:max-w-md">
                 {pdp.title}
               </h4>
+              <p className="text-[11px] text-gray-500 truncate">
+                {language === 'en' ? selectedVariant.nameEn : selectedVariant.nameZh}
+              </p>
             </div>
           </div>
 
@@ -723,11 +871,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
           <div className="flex items-center gap-3">
             <div className="text-right flex items-baseline gap-2">
               <span className="text-base sm:text-lg font-extrabold text-gray-900">
-                {pdp.priceDisplay}
+                {currentPriceDisplay}
               </span>
-              {originalPriceDisplay && (
+              {currentOriginalPriceDisplay && (
                 <span className="text-xs text-gray-400 line-through">
-                  {originalPriceDisplay}
+                  {currentOriginalPriceDisplay}
                 </span>
               )}
             </div>

@@ -175,7 +175,10 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-gray-900 leading-tight">{item.titleEn}</p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">Qty: {item.quantity}</p>
+                      {item.variant && (
+                        <p className="text-[11px] font-medium text-gray-500 mt-0.5">{item.variant}</p>
+                      )}
+                      <p className="text-[11px] text-gray-400 mt-0.5">Qty: {item.quantity}</p>
                     </div>
                   </div>
                   <span className="text-xs font-bold text-gray-900">${(item.priceEn * item.quantity).toFixed(2)}</span>
@@ -524,8 +527,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                           <h4 className="text-sm font-semibold text-gray-900 leading-snug">
                             {item.titleEn}
                           </h4>
-                          <p className="text-xs text-gray-400 truncate mt-0.5">
-                            {item.subtitleEn || 'At-home feline wellness test kit'}
+                          <p className="text-xs text-gray-500 truncate mt-0.5">
+                            {item.variant || item.subtitleEn || 'At-home feline wellness test kit'}
                           </p>
                         </div>
                       </div>

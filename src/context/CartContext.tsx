@@ -10,6 +10,8 @@ export interface CartItem {
   priceZh: number;
   quantity: number;
   image: string;
+  variant?: string;
+  variantId?: string;
 }
 
 interface CartContextType {

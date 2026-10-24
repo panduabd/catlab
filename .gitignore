@@ -27,3 +27,6 @@ Thumbs.db
 # TypeScript cache
 *.tsbuildinfo
 .vercel
+
+# Docs & spec files
+*.pdf

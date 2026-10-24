@@ -855,12 +855,15 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
 
   const handleDeleteVariant = (varId: string) => {
     if (!currentEditingProduct) return;
-    if (currentEditingProduct.variants.length <= 1) {
-      alert('A product must maintain at least 1 variant.');
+    if (currentEditingProduct.variants[0]?.id === varId) {
+      onShowToast('Default master variant represents the core product and cannot be deleted.');
       return;
     }
     const updatedVariants = currentEditingProduct.variants.filter((item) => item.id !== varId);
-    const updatedStock = updatedVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+    const updatedStock =
+      updatedVariants.length > 0
+        ? updatedVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)
+        : currentEditingProduct.totalStock || 0;
     updateCurrentProduct({
       ...currentEditingProduct,
       variants: updatedVariants,
@@ -875,6 +878,8 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
     value: string | number | undefined
   ) => {
     if (!currentEditingProduct) return;
+    const isDefaultVariant = currentEditingProduct.variants[0]?.id === varId;
+
     const updatedVariants = currentEditingProduct.variants.map((v) => {
       if (v.id === varId) {
         return { ...v, [field]: value };
@@ -882,8 +887,27 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
       return v;
     });
     const updatedStock = updatedVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+
+    let updatedBasePrice = currentEditingProduct.basePrice;
+    let updatedOriginalPrice = currentEditingProduct.originalPrice;
+    let updatedSku = currentEditingProduct.sku;
+
+    // Two-way synchronization: Default Master Variant (row 0) syncs with Master Product fields
+    if (isDefaultVariant) {
+      if (field === 'price') {
+        updatedBasePrice = Number(value) || 0;
+      } else if (field === 'originalPrice') {
+        updatedOriginalPrice = value === '' || value === undefined ? undefined : Number(value);
+      } else if (field === 'sku') {
+        updatedSku = String(value || '');
+      }
+    }
+
     updateCurrentProduct({
       ...currentEditingProduct,
+      basePrice: updatedBasePrice,
+      originalPrice: updatedOriginalPrice,
+      sku: updatedSku,
       variants: updatedVariants,
       totalStock: updatedStock
     });
@@ -1834,9 +1858,17 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                           <input
                             type="text"
                             value={currentEditingProduct.sku}
-                            onChange={(e) =>
-                              updateCurrentProduct({ ...currentEditingProduct, sku: e.target.value })
-                            }
+                            onChange={(e) => {
+                              const newSku = e.target.value;
+                              const updatedVariants = currentEditingProduct.variants.map((v, idx) =>
+                                idx === 0 ? { ...v, sku: newSku } : v
+                              );
+                              updateCurrentProduct({
+                                ...currentEditingProduct,
+                                sku: newSku,
+                                variants: updatedVariants
+                              });
+                            }}
                             placeholder="e.g. CLP-KIT-01"
                             className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 font-mono text-xs sm:text-sm font-bold text-gray-800 focus:border-charcoal focus:ring-2 focus:ring-yellow/30 outline-none"
                           />
@@ -2702,15 +2734,17 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                   <div className="rounded-3xl border border-gray-200/90 bg-white p-6 sm:p-7 shadow-2xs space-y-5">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-gray-100">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-base font-bold text-gray-900">Product Variants & Stock</h3>
                         <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-bold text-gray-600">
-                          {currentEditingProduct.variants.length} Options
+                          {currentEditingProduct.variants.length <= 1
+                            ? '1 Option (Single Product / 0 Additional Variants)'
+                            : `${currentEditingProduct.variants.length} Options (${currentEditingProduct.variants.length - 1} Additional Variants)`}
                         </span>
-                        <AdminHelpIcon text="Manage individual SKU options, variant thumbnail photos, unit pricing in NT$, and stock quantities. Variant inventory automatically decreases on paid orders." />
+                        <AdminHelpIcon text="The first row is the Default Master Variant representing the core product. Its price and SKU are synchronized with the Master Product. Additional variants can be added, customized, and removed freely." />
                       </div>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Manage each variant's image, name, SKU, unit price, and warehouse stock units.
+                        Manage individual SKU options, variant thumbnail photos, unit pricing in NT$, and stock quantities.
                       </p>
                     </div>
 
@@ -2720,7 +2754,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                       className="inline-flex items-center gap-1.5 rounded-xl bg-charcoal hover:bg-black text-white px-4 py-2 text-xs font-bold shadow-xs transition-all cursor-pointer self-start sm:self-auto"
                     >
                       <Plus className="h-3.5 w-3.5 text-yellow" />
-                      <span>Add Variant</span>
+                      <span>Add</span>
                     </button>
                   </div>
 
@@ -2747,120 +2781,235 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 bg-white">
-                        {currentEditingProduct.variants.map((v) => (
-                          <tr key={v.id} className="hover:bg-gray-50/70 transition-colors">
-                            {/* Variant Thumbnail Image */}
-                            <td className="py-3 px-3.5 text-center">
-                              <div
-                                onClick={() => setPickingVariantImageId(v.id)}
-                                className="relative h-11 w-11 mx-auto rounded-xl border border-gray-200 bg-gray-50 overflow-hidden cursor-pointer group hover:ring-2 hover:ring-charcoal transition-all flex items-center justify-center shrink-0 shadow-2xs"
-                                title="Click to select or upload variant image"
+                        {currentEditingProduct.variants.length > 0 ? (
+                          currentEditingProduct.variants.map((v, index) => {
+                            const isDefault = index === 0;
+                            return (
+                              <tr
+                                key={v.id}
+                                className={`transition-colors ${
+                                  isDefault ? 'bg-amber-50/20 hover:bg-amber-50/35' : 'hover:bg-gray-50/70'
+                                }`}
                               >
-                                {v.imageUrl ? (
-                                  <img
-                                    src={v.imageUrl}
-                                    alt={v.name}
-                                    className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+                                {/* Variant Thumbnail Image */}
+                                <td className="py-3 px-3.5 text-center">
+                                  {isDefault ? (
+                                    <div
+                                      className="relative h-11 w-11 mx-auto rounded-xl border border-gray-200 bg-gray-100/80 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs opacity-80 cursor-not-allowed select-none"
+                                      title="Master product primary image (managed in Media Gallery tab)"
+                                    >
+                                      {v.imageUrl ? (
+                                        <img
+                                          src={v.imageUrl}
+                                          alt={v.name}
+                                          className="h-full w-full object-cover"
+                                        />
+                                      ) : (
+                                        <ImageIcon className="h-5 w-5 text-gray-400" />
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div
+                                      onClick={() => setPickingVariantImageId(v.id)}
+                                      className="relative h-11 w-11 mx-auto rounded-xl border border-gray-200 bg-gray-50 overflow-hidden cursor-pointer group hover:ring-2 hover:ring-charcoal transition-all flex items-center justify-center shrink-0 shadow-2xs"
+                                      title="Click to select or upload variant image"
+                                    >
+                                      {v.imageUrl ? (
+                                        <img
+                                          src={v.imageUrl}
+                                          alt={v.name}
+                                          className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+                                        />
+                                      ) : (
+                                        <ImageIcon className="h-5 w-5 text-gray-400" />
+                                      )}
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                        <Edit3 className="h-3.5 w-3.5 text-yellow" />
+                                      </div>
+                                    </div>
+                                  )}
+                                </td>
+
+                                {/* Variant Option Name */}
+                                <td className="py-3 px-3.5 min-w-[220px] sm:min-w-[260px]">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <input
+                                        type="text"
+                                        disabled={isDefault}
+                                        value={v.name}
+                                        onChange={(e) =>
+                                          handleUpdateVariantField(v.id, 'name', e.target.value)
+                                        }
+                                        placeholder={
+                                          isDefault
+                                            ? 'Master Product'
+                                            : 'e.g. Double Pack (20 Strips)'
+                                        }
+                                        className={`w-full min-w-[160px] rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
+                                          isDefault
+                                            ? 'border-gray-200 bg-gray-100/80 text-gray-500 cursor-not-allowed select-none'
+                                            : 'border-gray-200 bg-white text-gray-900 focus:outline-none focus:border-charcoal'
+                                        }`}
+                                        title={isDefault ? 'Master product option name' : undefined}
+                                      />
+                                      {isDefault && (
+                                        <span
+                                          className="shrink-0 inline-flex items-center rounded-md bg-amber-100 text-amber-900 border border-amber-300/80 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider"
+                                          title="Master Product Option"
+                                        >
+                                          [MASTER]
+                                        </span>
+                                      )}
+                                    </div>
+                                    {isDefault && (
+                                      <p className="text-[10px] text-gray-400">
+                                        Core product option. Managed via General Info &amp; Pricing sidebar.
+                                      </p>
+                                    )}
+                                  </div>
+                                </td>
+
+                                <td className="py-3 px-3">
+                                  <input
+                                    type="text"
+                                    disabled={isDefault}
+                                    value={v.sku}
+                                    onChange={(e) =>
+                                      handleUpdateVariantField(v.id, 'sku', e.target.value)
+                                    }
+                                    className={`w-32 rounded-lg border px-2.5 py-1.5 text-xs font-mono font-semibold ${
+                                      isDefault
+                                        ? 'border-gray-200 bg-gray-100/80 text-gray-500 cursor-not-allowed select-none'
+                                        : 'border-gray-200 bg-white text-gray-700 focus:outline-none focus:border-charcoal'
+                                    }`}
+                                    title={isDefault ? 'Inherited from Master SKU (edit in General Info)' : 'Variant SKU'}
                                   />
-                                ) : (
-                                  <ImageIcon className="h-5 w-5 text-gray-400" />
-                                )}
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                                  <Edit3 className="h-3.5 w-3.5 text-yellow" />
-                                </div>
-                              </div>
-                            </td>
+                                </td>
 
-                            {/* Variant Option Name (Spacious with full breathing room) */}
-                            <td className="py-3 px-3.5 min-w-[220px] sm:min-w-[260px]">
-                              <input
-                                type="text"
-                                value={v.name}
-                                onChange={(e) =>
-                                  handleUpdateVariantField(v.id, 'name', e.target.value)
-                                }
-                                placeholder="e.g. Complete Kit (10 Strips)"
-                                className="w-full min-w-[200px] rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 focus:outline-none focus:border-charcoal"
-                              />
-                            </td>
+                                {/* Original Strikethrough Price */}
+                                <td className="py-3 px-3 min-w-[140px]">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-gray-400 font-semibold text-xs line-through">NT$</span>
+                                    <input
+                                      type="number"
+                                      disabled={isDefault}
+                                      value={v.originalPrice ?? ''}
+                                      onChange={(e) =>
+                                        handleUpdateVariantField(
+                                          v.id,
+                                          'originalPrice',
+                                          e.target.value === '' ? undefined : Number(e.target.value)
+                                        )
+                                      }
+                                      placeholder="Optional"
+                                      className={`w-24 rounded-lg border px-2 py-1.5 text-xs font-bold tabular-nums line-through placeholder:no-underline ${
+                                        isDefault
+                                          ? 'border-gray-200 bg-gray-100/80 text-gray-400 cursor-not-allowed select-none'
+                                          : 'border-gray-200 bg-white text-gray-400 focus:text-gray-900 focus:outline-none focus:border-charcoal'
+                                      }`}
+                                      title={
+                                        isDefault
+                                          ? 'Inherited from Master Original Price (edit in Pricing sidebar)'
+                                          : 'Original compare-at price'
+                                      }
+                                    />
+                                  </div>
+                                </td>
 
-                            <td className="py-3 px-3">
-                              <input
-                                type="text"
-                                value={v.sku}
-                                onChange={(e) =>
-                                  handleUpdateVariantField(v.id, 'sku', e.target.value)
-                                }
-                                className="w-32 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-mono font-semibold text-gray-700 focus:outline-none focus:border-charcoal"
-                              />
-                            </td>
+                                {/* Sale Price */}
+                                <td className="py-3 px-3 min-w-[130px]">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-gray-400 font-bold text-xs">NT$</span>
+                                    <input
+                                      type="number"
+                                      disabled={isDefault}
+                                      value={v.price}
+                                      onChange={(e) =>
+                                        handleUpdateVariantField(v.id, 'price', Number(e.target.value))
+                                      }
+                                      className={`w-24 rounded-lg border px-2 py-1.5 text-xs font-bold tabular-nums ${
+                                        isDefault
+                                          ? 'border-gray-200 bg-gray-100/80 text-gray-500 cursor-not-allowed select-none'
+                                          : 'border-gray-200 bg-white text-gray-900 focus:outline-none focus:border-charcoal'
+                                      }`}
+                                      title={
+                                        isDefault
+                                          ? 'Inherited from Master Base Price (edit in Pricing sidebar)'
+                                          : 'Variant sale price'
+                                      }
+                                    />
+                                  </div>
+                                </td>
 
-                            {/* Original Strikethrough Price */}
-                            <td className="py-3 px-3 min-w-[140px]">
-                              <div className="flex items-center gap-1">
-                                <span className="text-gray-400 font-semibold text-xs line-through">NT$</span>
-                                <input
-                                  type="number"
-                                  value={v.originalPrice ?? ''}
-                                  onChange={(e) =>
-                                    handleUpdateVariantField(
-                                      v.id,
-                                      'originalPrice',
-                                      e.target.value === '' ? undefined : Number(e.target.value)
-                                    )
-                                  }
-                                  placeholder="Optional"
-                                  className="w-24 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-bold tabular-nums text-gray-400 focus:text-gray-900 line-through placeholder:no-underline focus:outline-none focus:border-charcoal"
-                                  title="Original compare-at price (displays with strikethrough line)"
-                                />
-                              </div>
-                            </td>
-
-                            {/* Sale Price */}
-                            <td className="py-3 px-3 min-w-[130px]">
-                              <div className="flex items-center gap-1">
-                                <span className="text-gray-400 font-bold text-xs">NT$</span>
-                                <input
-                                  type="number"
-                                  value={v.price}
-                                  onChange={(e) =>
-                                    handleUpdateVariantField(v.id, 'price', Number(e.target.value))
-                                  }
-                                  className="w-24 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-bold tabular-nums text-gray-900 focus:outline-none focus:border-charcoal"
-                                />
-                              </div>
-                            </td>
-
-                            <td className="py-3 px-3">
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="number"
-                                  value={v.stock}
-                                  onChange={(e) =>
-                                    handleUpdateVariantField(v.id, 'stock', Number(e.target.value))
-                                  }
-                                  className={`w-20 rounded-lg border px-2 py-1.5 text-xs font-bold tabular-nums focus:outline-none focus:border-charcoal ${
-                                    v.stock <= 5
-                                      ? 'border-amber-300 bg-amber-50 text-amber-900'
-                                      : 'border-gray-200 bg-white text-gray-900'
-                                  }`}
-                                />
-                                <span className="text-xs text-gray-400">units</span>
-                              </div>
-                            </td>
-                            <td className="py-3 px-3 text-right">
+                                <td className="py-3 px-3">
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="number"
+                                      disabled={isDefault}
+                                      value={v.stock}
+                                      onChange={(e) =>
+                                        handleUpdateVariantField(v.id, 'stock', Number(e.target.value))
+                                      }
+                                      className={`w-20 rounded-lg border px-2 py-1.5 text-xs font-bold tabular-nums ${
+                                        isDefault
+                                          ? 'border-gray-200 bg-gray-100/80 text-gray-500 cursor-not-allowed select-none'
+                                          : v.stock <= 5
+                                          ? 'border-amber-300 bg-amber-50 text-amber-900 focus:outline-none focus:border-charcoal'
+                                          : 'border-gray-200 bg-white text-gray-900 focus:outline-none focus:border-charcoal'
+                                      }`}
+                                      title={
+                                        isDefault
+                                          ? 'Inherited from Master Stock Units (edit in Pricing sidebar)'
+                                          : 'Variant warehouse stock'
+                                      }
+                                    />
+                                    <span className="text-xs text-gray-400">units</span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-3 text-right">
+                                  {isDefault ? (
+                                    <button
+                                      type="button"
+                                      disabled
+                                      title="Default master variant represents the core product and cannot be deleted"
+                                      className="text-gray-300 cursor-not-allowed p-1 opacity-40"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteVariant(v.id)}
+                                      title="Delete variant"
+                                      className="text-gray-400 hover:text-rose-600 p-1 cursor-pointer transition-colors"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td colSpan={7} className="py-12 text-center text-gray-500">
+                              <Package className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                              <p className="text-sm font-bold text-gray-700">No variants added (0 options)</p>
+                              <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+                                This product operates as a standalone item without variant options. You can click &quot;Add&quot; above at any time.
+                              </p>
                               <button
                                 type="button"
-                                disabled={currentEditingProduct.variants.length <= 1}
-                                onClick={() => handleDeleteVariant(v.id)}
-                                title={currentEditingProduct.variants.length <= 1 ? "Product must have at least one variant" : "Delete variant"}
-                                className="text-gray-400 hover:text-rose-600 disabled:opacity-30 disabled:cursor-not-allowed p-1 cursor-pointer transition-colors"
+                                onClick={handleAddVariant}
+                                className="mt-3.5 inline-flex items-center gap-1.5 rounded-xl bg-charcoal hover:bg-black text-white px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Plus className="h-3.5 w-3.5 text-yellow" />
+                                <span>Add</span>
                               </button>
                             </td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -2966,17 +3115,22 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                           <input
                             type="number"
                             value={currentEditingProduct.basePrice}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              const newPrice = Number(e.target.value);
+                              const updatedVariants = currentEditingProduct.variants.map((v, idx) =>
+                                idx === 0 ? { ...v, price: newPrice } : v
+                              );
                               updateCurrentProduct({
                                 ...currentEditingProduct,
-                                basePrice: Number(e.target.value)
-                              })
-                            }
+                                basePrice: newPrice,
+                                variants: updatedVariants
+                              });
+                            }}
                             className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 font-extrabold text-sm tabular-nums text-gray-900 focus:border-charcoal focus:ring-2 focus:ring-yellow/30 outline-none"
                           />
                         </div>
                         <span className="text-[11px] text-gray-400 mt-1 block">
-                          Default catalog price before variant adjustments.
+                          Default master price (synced with default master variant).
                         </span>
                       </div>
 
@@ -2992,37 +3146,79 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                           <input
                             type="number"
                             value={currentEditingProduct.originalPrice ?? ''}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              const newOrigPrice =
+                                e.target.value === '' ? undefined : Number(e.target.value);
+                              const updatedVariants = currentEditingProduct.variants.map((v, idx) =>
+                                idx === 0 ? { ...v, originalPrice: newOrigPrice } : v
+                              );
                               updateCurrentProduct({
                                 ...currentEditingProduct,
-                                originalPrice: e.target.value === '' ? undefined : Number(e.target.value)
-                              })
-                            }
+                                originalPrice: newOrigPrice,
+                                variants: updatedVariants
+                              });
+                            }}
                             placeholder="e.g. 1200"
                             className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 font-bold text-sm tabular-nums text-gray-400 line-through placeholder:no-underline focus:text-gray-900 focus:border-charcoal focus:ring-2 focus:ring-yellow/30 outline-none"
                           />
                         </div>
                         <span className="text-[11px] text-gray-400 mt-1 block">
-                          Displays crossed out next to the sale price (e.g. <span className="line-through">NT$ 1,200</span> NT$ 890).
+                          Displays crossed out next to the sale price (synced with default master variant).
                         </span>
                       </div>
 
-                      <div className="rounded-2xl bg-gray-50/70 border border-gray-200 p-3.5 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-gray-600">Total Stock (All Variants):</span>
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-extrabold ${
-                              totalStockSynced === 0
-                                ? 'bg-rose-100 text-rose-800'
-                                : totalStockSynced <= 5
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-emerald-100 text-emerald-800'
-                            }`}
-                          >
-                            {totalStockSynced} units
-                          </span>
+                      {/* Master Stock Units */}
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+                          Master Stock Units <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min={0}
+                            value={currentEditingProduct.variants[0]?.stock ?? currentEditingProduct.totalStock ?? 0}
+                            onChange={(e) => {
+                              const newStock = Math.max(0, Number(e.target.value));
+                              const updatedVariants = currentEditingProduct.variants.map((v, idx) =>
+                                idx === 0 ? { ...v, stock: newStock } : v
+                              );
+                              const updatedTotal =
+                                updatedVariants.length > 0
+                                  ? updatedVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)
+                                  : newStock;
+                              updateCurrentProduct({
+                                ...currentEditingProduct,
+                                totalStock: updatedTotal,
+                                variants: updatedVariants
+                              });
+                            }}
+                            className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 font-extrabold text-sm tabular-nums text-gray-900 focus:border-charcoal focus:ring-2 focus:ring-yellow/30 outline-none"
+                          />
+                          <span className="text-xs font-bold text-gray-500 shrink-0">units</span>
                         </div>
+                        <span className="text-[11px] text-gray-400 mt-1 block">
+                          Warehouse inventory for the core master product option.
+                        </span>
                       </div>
+
+                      {currentEditingProduct.variants.length > 1 && (
+                        <div className="rounded-2xl bg-gray-50/70 border border-gray-200 p-3.5 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-gray-600">Total Synced Stock (All Variants):</span>
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-extrabold ${
+                                totalStockSynced === 0
+                                  ? 'bg-rose-100 text-rose-800'
+                                  : totalStockSynced <= 5
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {totalStockSynced} units
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
