@@ -3,8 +3,19 @@ import { useLanguage } from '../context/LanguageContext';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { CartDrawer } from './CartDrawer';
+import { DefaultProfileIcon } from './DefaultProfileIcon';
 
-export type NavView = 'home' | 'catalog' | 'product' | 'contact' | 'checkout' | 'account';
+export type NavView =
+  | 'home'
+  | 'catalog'
+  | 'product'
+  | 'contact'
+  | 'checkout'
+  | 'account'
+  | 'admin'
+  | 'login'
+  | 'register'
+  | 'forgot-password';
 
 interface NavbarProps {
   currentView: NavView;
@@ -74,12 +85,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
         <div>
           {/* Member Card Header (No online icon, no active member badge) */}
           <div className="pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-yellow/20 text-charcoal border-2 border-yellow font-extrabold text-sm shrink-0 shadow-2xs">
-              {user.name
-                .split(' ')
-                .map((n) => n[0])
-                .join('')}
-            </div>
+            <DefaultProfileIcon className="h-11 w-11 shadow-2xs" iconClassName="h-6 w-6" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-gray-900 truncate leading-snug">{user.name}</p>
               <p className="text-xs text-gray-500 truncate">{user.email}</p>
@@ -158,12 +164,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
             </p>
           </div>
 
-          {/* Auth Action Buttons: Clicking Sign In or Create an Account immediately signs in */}
+          {/* Auth Action Buttons: Navigate to Login or Register page */}
           <div className="py-4 space-y-2">
             <button
               type="button"
               onClick={() => {
-                login();
+                setIsProfileOpen(false);
+                onNavigate('login');
               }}
               className="w-full rounded-lg bg-[#fed700] hover:bg-[#fed700]/90 text-gray-900 py-2.5 text-xs font-semibold shadow-xs transition-all text-center block cursor-pointer"
             >
@@ -173,7 +180,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
             <button
               type="button"
               onClick={() => {
-                login();
+                setIsProfileOpen(false);
+                onNavigate('register');
               }}
               className="w-full rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-2 text-xs font-semibold shadow-2xs transition-all text-center block cursor-pointer"
             >
@@ -208,7 +216,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
           currentView === 'contact' ||
           currentView === 'catalog' ||
           currentView === 'product' ||
-          currentView === 'account'
+          currentView === 'account' ||
+          currentView === 'login' ||
+          currentView === 'register' ||
+          currentView === 'forgot-password'
             ? 'bg-surface/90 shadow-md backdrop-blur-md'
             : 'bg-transparent'
         }`}
@@ -259,8 +270,62 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
             })}
           </div>
 
-          {/* Right CTA & Controls (Free Consultation + Cart & Profile Badge) */}
+          {/* Right CTA & Controls (English Badge + Free Consultation + Cart & Profile Badge) */}
           <div className="hidden items-center gap-3 md:flex">
+            {/* English Static Badge (Matching user mockup: dark #282828 pill, compact [A][文] dual-card icon, English text, and chevron) */}
+            <div
+              className="flex h-10 items-center gap-2 rounded-full bg-[#282828] px-3.5 text-white shadow-sm select-none cursor-default shrink-0"
+              title="Language: English"
+            >
+              {/* Compact [A][文] Dual-Card Language Icon */}
+              <svg
+                className="h-[13px] w-auto shrink-0 select-none"
+                viewBox="0 0 31 22"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <rect x="0" y="0" width="14.5" height="22" rx="3.5" fill="#FFFFFF" />
+                <text
+                  x="7.25"
+                  y="15.5"
+                  fill="#282828"
+                  fontSize="11.5"
+                  fontWeight="900"
+                  fontFamily="Inter, system-ui, -apple-system, sans-serif"
+                  textAnchor="middle"
+                >
+                  A
+                </text>
+
+                <rect x="16.5" y="0" width="14.5" height="22" rx="3.5" fill="#FFFFFF" />
+                <text
+                  x="23.75"
+                  y="15"
+                  fill="#282828"
+                  fontSize="10.5"
+                  fontWeight="900"
+                  fontFamily="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+                  textAnchor="middle"
+                >
+                  文
+                </text>
+              </svg>
+
+              {/* Text */}
+              <span className="text-sm font-semibold text-white tracking-tight">English</span>
+
+              {/* Chevron Down */}
+              <svg
+                className="h-3 w-3 text-white shrink-0 stroke-[2.5]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+
             {/* Consultation Button */}
             <button
               onClick={() => onNavigate('contact')}
@@ -328,8 +393,57 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
             </div>
           </div>
 
-          {/* Mobile controls: Cart & Profile Badge + Hamburger */}
+          {/* Mobile controls: English Badge + Cart & Profile Badge + Hamburger */}
           <div className="flex items-center gap-2 md:hidden">
+            {/* Mobile English Badge (Matching user mockup: dark #282828 pill, compact [A][文] dual-card icon, English text, chevron) */}
+            <div
+              className="flex h-9 items-center gap-1.5 rounded-full bg-[#282828] px-2.5 text-white shadow-2xs select-none cursor-default shrink-0"
+              title="Language: English"
+            >
+              <svg
+                className="h-[11px] w-auto shrink-0 select-none"
+                viewBox="0 0 31 22"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <rect x="0" y="0" width="14.5" height="22" rx="3.5" fill="#FFFFFF" />
+                <text
+                  x="7.25"
+                  y="15.5"
+                  fill="#282828"
+                  fontSize="11.5"
+                  fontWeight="900"
+                  fontFamily="Inter, system-ui, -apple-system, sans-serif"
+                  textAnchor="middle"
+                >
+                  A
+                </text>
+
+                <rect x="16.5" y="0" width="14.5" height="22" rx="3.5" fill="#FFFFFF" />
+                <text
+                  x="23.75"
+                  y="15"
+                  fill="#282828"
+                  fontSize="10.5"
+                  fontWeight="900"
+                  fontFamily="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+                  textAnchor="middle"
+                >
+                  文
+                </text>
+              </svg>
+              <span className="text-[11px] font-semibold text-white tracking-tight">English</span>
+              <svg
+                className="h-2.5 w-2.5 text-white shrink-0 stroke-[2.5]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+
             {/* Mobile Badge */}
             <div className="flex h-9 items-center rounded-full border border-border/80 bg-surface/90 px-1 shadow-2xs">
               <button
@@ -429,20 +543,29 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
                 </button>
               </div>
             ) : (
-              <div className="pt-2 border-t border-gray-100">
+              <div className="pt-2 border-t border-gray-100 space-y-1">
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    login();
+                    onNavigate('login');
                   }}
-                  className="block w-full text-left py-2 text-base font-semibold text-charcoal"
+                  className="block w-full text-left py-2 text-base font-semibold text-charcoal cursor-pointer"
                 >
-                  Sign In
+                  {language === 'en' ? 'Sign In' : '會員登入'}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    onNavigate('register');
+                  }}
+                  className="block w-full text-left py-2 text-base font-semibold text-charcoal cursor-pointer"
+                >
+                  {language === 'en' ? 'Create an Account' : '註冊新帳號'}
                 </button>
               </div>
             )}
 
-            <div className="pt-4 border-t border-border">
+            <div className="pt-4 border-t border-border space-y-3">
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
@@ -452,6 +575,55 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
               >
                 {t.nav.consultation}
               </button>
+
+              {/* Mobile Language Static Indicator */}
+              <div className="flex items-center justify-between text-xs text-text-secondary select-none cursor-default px-1 py-1">
+                <span className="font-medium">Language</span>
+                <div className="flex h-8 items-center gap-2 rounded-full bg-[#282828] px-3 text-white shadow-2xs select-none cursor-default">
+                  <svg
+                    className="h-[11px] w-auto shrink-0 select-none"
+                    viewBox="0 0 31 22"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <rect x="0" y="0" width="14.5" height="22" rx="3.5" fill="#FFFFFF" />
+                    <text
+                      x="7.25"
+                      y="15.5"
+                      fill="#282828"
+                      fontSize="11.5"
+                      fontWeight="900"
+                      fontFamily="Inter, system-ui, -apple-system, sans-serif"
+                      textAnchor="middle"
+                    >
+                      A
+                    </text>
+
+                    <rect x="16.5" y="0" width="14.5" height="22" rx="3.5" fill="#FFFFFF" />
+                    <text
+                      x="23.75"
+                      y="15"
+                      fill="#282828"
+                      fontSize="10.5"
+                      fontWeight="900"
+                      fontFamily="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+                      textAnchor="middle"
+                    >
+                      文
+                    </text>
+                  </svg>
+                  <span className="text-xs font-semibold text-white tracking-tight">English</span>
+                  <svg
+                    className="h-2.5 w-2.5 text-white shrink-0 stroke-[2.5]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
         )}

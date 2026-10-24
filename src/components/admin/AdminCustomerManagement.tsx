@@ -6,11 +6,8 @@ import {
   Ban,
   ShieldAlert,
   Mail,
-  Phone,
   Calendar,
   AlertTriangle,
-  UserCheck,
-  UserX,
   Lock,
   Unlock,
   AlertOctagon
@@ -191,7 +188,6 @@ export const AdminCustomerManagement: React.FC<AdminCustomerManagementProps> = (
                 <th className="py-3.5 pl-6 pr-3">Customer ID</th>
                 <th className="py-3.5 px-3">Full Name</th>
                 <th className="py-3.5 px-3">Email Address</th>
-                <th className="py-3.5 px-3">Phone Number</th>
                 <th className="py-3.5 px-3">Registered Date</th>
                 <th className="py-3.5 px-3">Total Spend</th>
                 <th className="py-3.5 px-3">Account Status</th>
@@ -217,31 +213,16 @@ export const AdminCustomerManagement: React.FC<AdminCustomerManagementProps> = (
                     </td>
 
                     <td className="py-4 px-3 font-bold text-gray-900">
-                      <div className="flex items-center gap-2.5">
-                        <div
-                          className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                            cust.isActive
-                              ? 'bg-yellow/30 text-charcoal'
-                              : 'bg-rose-100 text-rose-700'
-                          }`}
-                        >
-                          {cust.fullName.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <p>{cust.fullName}</p>
-                          <p className="text-[11px] text-gray-400 font-normal">
-                            {cust.totalOrders} total orders
-                          </p>
-                        </div>
+                      <div>
+                        <p>{cust.fullName}</p>
+                        <p className="text-[11px] text-gray-400 font-normal">
+                          {cust.totalOrders} total orders
+                        </p>
                       </div>
                     </td>
 
                     <td className="py-4 px-3 text-gray-600 font-mono text-xs">
                       {cust.email}
-                    </td>
-
-                    <td className="py-4 px-3 text-gray-600 whitespace-nowrap">
-                      {cust.phone}
                     </td>
 
                     <td className="py-4 px-3 text-gray-500 whitespace-nowrap">
@@ -252,26 +233,21 @@ export const AdminCustomerManagement: React.FC<AdminCustomerManagementProps> = (
                       NT$ {cust.totalSpentTwd.toLocaleString()}
                     </td>
 
-                    {/* Status Badge */}
-                    <td className="py-4 px-3">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                          cust.isActive
-                            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20'
-                            : 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20'
-                        }`}
-                      >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            cust.isActive ? 'bg-emerald-500' : 'bg-rose-500'
-                          }`}
-                        ></span>
-                        <span>{cust.isActive ? 'Active' : 'Inactive / Suspended'}</span>
-                      </span>
+                    {/* Status Badge (Same component style as Order Management, no dot) */}
+                    <td className="py-4 px-3 whitespace-nowrap">
+                      {cust.isActive ? (
+                        <span className="inline-flex items-center rounded-md bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200/80">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-md bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700 border border-rose-200/80">
+                          Inactive / Suspended
+                        </span>
+                      )}
                     </td>
 
-                    {/* Explicit Action Button with Guarded Confirmation (NO BARE TOGGLE SWITCH!) */}
-                    <td className="py-4 pr-6 pl-3 text-right">
+                    {/* Explicit Action Button with Guarded Confirmation (No icons, text Deactivate / Activate) */}
+                    <td className="py-4 pr-6 pl-3 text-right whitespace-nowrap">
                       {cust.isActive ? (
                         <AdminTooltip content="Open confirmation dialog to deactivate account and terminate active login sessions">
                           <button
@@ -279,10 +255,9 @@ export const AdminCustomerManagement: React.FC<AdminCustomerManagementProps> = (
                             onClick={() =>
                               setConfirmModal({ customer: cust, action: 'deactivate' })
                             }
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
+                            className="inline-flex items-center rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 px-3.5 py-1.5 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
                           >
-                            <UserX className="h-3.5 w-3.5 text-rose-600" />
-                            <span>Deactivate Account</span>
+                            Deactivate
                           </button>
                         </AdminTooltip>
                       ) : (
@@ -292,10 +267,9 @@ export const AdminCustomerManagement: React.FC<AdminCustomerManagementProps> = (
                             onClick={() =>
                               setConfirmModal({ customer: cust, action: 'activate' })
                             }
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
+                            className="inline-flex items-center rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3.5 py-1.5 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
                           >
-                            <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
-                            <span>Activate Account</span>
+                            Activate
                           </button>
                         </AdminTooltip>
                       )}
@@ -304,7 +278,7 @@ export const AdminCustomerManagement: React.FC<AdminCustomerManagementProps> = (
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-gray-500">
+                  <td colSpan={7} className="py-12 text-center text-gray-500">
                     No customers match the current search filter.
                   </td>
                 </tr>
@@ -407,7 +381,7 @@ export const AdminCustomerManagement: React.FC<AdminCustomerManagementProps> = (
                   onClick={handleExecuteStatusChange}
                   className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 text-xs font-bold shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                 >
-                  Yes, Deactivate Account
+                  Yes, Deactivate
                 </button>
               ) : (
                 <button
@@ -415,7 +389,7 @@ export const AdminCustomerManagement: React.FC<AdminCustomerManagementProps> = (
                   onClick={handleExecuteStatusChange}
                   className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 text-xs font-bold shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                 >
-                  Yes, Reactivate Account
+                  Yes, Activate
                 </button>
               )}
             </div>

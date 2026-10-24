@@ -152,6 +152,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
   const unitOriginalPrice = language === 'en' ? 35.0 : 1080;
   const totalPrice = unitPrice * quantity;
   const totalOriginalPrice = unitOriginalPrice * quantity;
+  const originalPriceDisplay = pdp.originalPriceDisplay || (language === 'en' ? '$35.00' : 'NT$ 1,080');
 
   return (
     <div className="min-h-screen bg-[#fcfcfd] text-gray-900 antialiased selection:bg-yellow/30">
@@ -305,9 +306,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
                 <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
                   {pdp.priceDisplay}
                 </span>
-                <span className="text-base sm:text-lg text-gray-400 line-through">
-                  {pdp.originalPriceDisplay}
-                </span>
+                {originalPriceDisplay && (
+                  <span className="text-base sm:text-lg text-gray-400 line-through font-medium">
+                    {originalPriceDisplay}
+                  </span>
+                )}
               </div>
 
               {/* Quantity Stepper & Buttons */}
@@ -726,9 +729,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
               <span className="text-base sm:text-lg font-extrabold text-gray-900">
                 {pdp.priceDisplay}
               </span>
-              <span className="text-xs text-gray-400 line-through">
-                {pdp.originalPriceDisplay}
-              </span>
+              {originalPriceDisplay && (
+                <span className="text-xs text-gray-400 line-through">
+                  {originalPriceDisplay}
+                </span>
+              )}
             </div>
 
             {/* Stepper (compact) */}

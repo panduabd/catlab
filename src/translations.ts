@@ -637,6 +637,7 @@ export const translations: Record<'en' | 'zh', TranslationContent> = {
       subtitle: "A home-based solution designed to support feline urine collection and health monitoring. Complete solution for urine collection, storage, and submission — designed for a simple at-home sampling experience.",
       priceAmount: 29.0,
       priceDisplay: "$29.00",
+      originalPriceDisplay: "$35.00",
       priceNote: "Single purchase • All-inclusive kit",
       quantityLabel: "Quantity",
       addToCart: "Add to Cart",

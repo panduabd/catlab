@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
+import { DefaultProfileIcon } from './DefaultProfileIcon';
 
 interface CheckoutPageProps {
   onNavigate: (view: 'home' | 'catalog' | 'product' | 'contact' | 'checkout', anchor?: string) => void;
@@ -234,9 +235,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                     /* Signed-In User State (Simulated) */
                     <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-3.5 flex items-center justify-between shadow-2xs animate-in fade-in duration-200">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#fed700]/30 border border-[#fed700] flex items-center justify-center font-bold text-xs text-charcoal shrink-0">
-                          SJ
-                        </div>
+                        <DefaultProfileIcon className="h-10 w-10" iconClassName="h-5 w-5" />
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-xs font-bold text-gray-900">Sarah Jenkins</p>
@@ -435,8 +434,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                             className="h-4 w-4 text-charcoal focus:ring-yellow accent-charcoal cursor-pointer"
                           />
                           <div>
-                            <p className="text-sm font-semibold text-gray-900">Standard Delivery (3–5 business days)</p>
-                            <p className="text-xs text-gray-500">Free shipping on all Cat Lab+ test kits</p>
+                            <p className="text-sm font-semibold text-gray-900">Standard Delivery</p>
+                            <p className="text-xs text-gray-500">3–5 business days</p>
                           </div>
                         </div>
                         <span className="text-sm font-bold text-emerald-600">FREE</span>
@@ -452,8 +451,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                             className="h-4 w-4 text-charcoal focus:ring-yellow accent-charcoal cursor-pointer"
                           />
                           <div>
-                            <p className="text-sm font-semibold text-gray-900">Priority Express (1–2 business days)</p>
-                            <p className="text-xs text-gray-500">Dispatched in priority crush-proof packaging</p>
+                            <p className="text-sm font-semibold text-gray-900">Priority Express</p>
+                            <p className="text-xs text-gray-500">1–2 business days</p>
                           </div>
                         </div>
                         <span className="text-sm font-semibold text-gray-900">$4.99</span>
@@ -628,7 +627,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                 <span className="font-mono font-bold text-gray-900 text-sm">{orderNumber}</span>
               </div>
               <div className="flex justify-between items-center text-xs pb-3 border-b border-gray-200">
-                <span className="text-gray-500 font-medium">Status Pesanan:</span>
+                <span className="text-gray-500 font-medium">Order Status:</span>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 ring-1 ring-blue-600/20 border border-blue-200">
                   <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
                   <span>Awaiting Shipment</span>

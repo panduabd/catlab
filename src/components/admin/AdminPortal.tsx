@@ -8,9 +8,11 @@ import {
   LogOut,
   X,
   CheckCircle2,
-  AlertTriangle,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Globe,
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import { AdminAnalyticsDashboard } from './AdminAnalyticsDashboard';
 import { AdminOrderManagement } from './AdminOrderManagement';
@@ -19,22 +21,36 @@ import { AdminShippingManagement } from './AdminShippingManagement';
 import { AdminCustomerManagement } from './AdminCustomerManagement';
 import { AdminLoginModal } from './AdminLoginModal';
 import { AdminEditProfileModal } from './AdminEditProfileModal';
+import { AdminLoginPage } from './AdminLoginPage';
+import { DefaultProfileIcon } from '../DefaultProfileIcon';
 
 export type AdminModule = 'dashboard' | 'orders' | 'products' | 'shipping' | 'customers';
 
 interface AdminPortalProps {
   onNavigateToStorefront: (
-    view: 'home' | 'catalog' | 'product' | 'contact' | 'checkout' | 'account' | 'admin',
+    view: 'home' | 'catalog' | 'product' | 'contact' | 'checkout' | 'account' | 'admin' | 'login' | 'register' | 'forgot-password',
     anchor?: string
   ) => void;
 }
 
 export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigateToStorefront }) => {
-  const [activeModule, setActiveModule] = useState<AdminModule>('orders');
-  const [adminUser, setAdminUser] = useState<{ name: string; email: string; role: string } | null>({
-    name: 'Dr. Alex Chen',
-    email: 'alex.chen@catlabplus.com',
-    role: 'Super Administrator'
+  const [activeModule, setActiveModule] = useState<AdminModule>('dashboard');
+  const [adminUser, setAdminUser] = useState<{ name: string; email: string; role: string } | null>(() => {
+    try {
+      const isLoggedOut = localStorage.getItem('catlab_admin_logged_out');
+      if (isLoggedOut === 'true') {
+        return null;
+      }
+      const saved = localStorage.getItem('catlab_admin_user');
+      if (saved) return JSON.parse(saved);
+      return {
+        name: 'Dr. Alex Chen',
+        email: 'alex.chen@catlabplus.com',
+        role: 'Super Administrator'
+      };
+    } catch {
+      return null;
+    }
   });
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -42,6 +58,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigateToStorefront
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [adminLanguage, setAdminLanguage] = useState<'en' | 'zh'>('en');
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
 
   // Trigger Toast Notification
   const triggerToast = (msg: string) => {
@@ -53,12 +71,23 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigateToStorefront
 
   const handleLogout = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    try {
+      localStorage.setItem('catlab_admin_logged_out', 'true');
+      localStorage.removeItem('catlab_admin_user');
+    } catch {
+      // ignore
+    }
     setAdminUser(null);
-    setIsLoginModalOpen(true);
     triggerToast('Logged out successfully.');
   };
 
   const handleLoginSuccess = (user: { name: string; email: string; role: string }) => {
+    try {
+      localStorage.removeItem('catlab_admin_logged_out');
+      localStorage.setItem('catlab_admin_user', JSON.stringify(user));
+    } catch {
+      // ignore
+    }
     setAdminUser(user);
     setIsLoginModalOpen(false);
     triggerToast(`Welcome back, ${user.name}!`);
@@ -66,7 +95,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigateToStorefront
 
   const handleSaveProfile = (updated: { name: string; email: string; role: string }) => {
     setAdminUser(updated);
+    try {
+      localStorage.setItem('catlab_admin_user', JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
   };
+
+  if (!adminUser) {
+    return (
+      <AdminLoginPage
+        onLoginSuccess={handleLoginSuccess}
+        onNavigateToStorefront={onNavigateToStorefront}
+      />
+    );
+  }
 
   // Sidebar modules matching Untitled UI reference layout
   const navItems = [
@@ -190,7 +233,6 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigateToStorefront
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeModule === item.id;
-              const isProducts = item.id === 'products';
 
               return (
                 <div key={item.id} className="relative group">
@@ -214,32 +256,101 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigateToStorefront
                       />
                       <span className="truncate">{item.label}</span>
                     </div>
-
-                    {/* Red Alert Notification: Icon Only without border and text */}
-                    {isProducts && (
-                      <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />
-                    )}
                   </button>
                 </div>
               );
             })}
           </div>
 
+          {/* Language Switcher Badge Dropdown (UI Only, Above Profile) */}
+          <div className="px-3 py-2.5 border-t border-white/10 shrink-0">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-gray-200 transition-colors cursor-pointer"
+                title="Change language"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Globe className="h-4 w-4 text-gray-400 shrink-0" />
+                  <span className="truncate">
+                    {adminLanguage === 'en' ? 'English' : '繁體中文'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-gray-300 uppercase tracking-wider">
+                    {adminLanguage === 'en' ? 'EN' : 'ZH'}
+                  </span>
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${
+                      isLangDropdownOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </div>
+              </button>
+
+              {/* Upward Dropdown Menu */}
+              {isLangDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setIsLangDropdownOpen(false)}
+                  />
+                  <div className="absolute bottom-full left-0 right-0 mb-1.5 z-40 rounded-2xl border border-white/15 bg-[#202020] p-1.5 shadow-2xl space-y-1 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400 border-b border-white/10 mb-1">
+                      Language
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAdminLanguage('en');
+                        setIsLangDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                        adminLanguage === 'en'
+                          ? 'bg-white/15 text-white font-bold'
+                          : 'text-gray-300 hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🇬🇧</span>
+                        <span>English (EN)</span>
+                      </div>
+                      {adminLanguage === 'en' && <Check className="h-3.5 w-3.5 text-yellow" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAdminLanguage('zh');
+                        setIsLangDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                        adminLanguage === 'zh'
+                          ? 'bg-white/15 text-white font-bold'
+                          : 'text-gray-300 hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🇹🇼</span>
+                        <span>繁體中文 (Mandarin)</span>
+                      </div>
+                      {adminLanguage === 'zh' && <Check className="h-3.5 w-3.5 text-yellow" />}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Untitled UI Bottom User Profile Card with Edit & Logout actions */}
           {adminUser && (
-            <div className="p-3 border-t border-white/10 shrink-0">
+            <div className="px-3 py-2.5 border-t border-white/10 shrink-0">
               <div
                 onClick={() => setIsEditProfileOpen(true)}
                 className="flex items-center justify-between p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="h-8 w-8 rounded-full bg-yellow/20 text-yellow border border-yellow/30 flex items-center justify-center font-bold text-xs shrink-0">
-                    {adminUser.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')
-                      .slice(0, 2)}
-                  </div>
+                  <DefaultProfileIcon className="h-8 w-8" iconClassName="h-4 w-4" />
                   <div className="min-w-0 text-left">
                     <p className="text-xs font-bold text-white truncate">
                       {adminUser.name}
@@ -267,20 +378,24 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigateToStorefront
       {/* ========================================================================= */}
       {/* MAIN CONTENT AREA (Header Removed per Request, Direct Page Content)       */}
       {/* ========================================================================= */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <div className="p-4 sm:p-8 lg:p-10 max-w-7xl w-full mx-auto">
+      <main className="flex-1 flex flex-col min-w-0">
+        <div className="w-full flex-1">
           {activeModule === 'dashboard' && (
-            <AdminAnalyticsDashboard
-              onNavigateToOrders={() => setActiveModule('orders')}
-              onNavigateToProducts={() => setActiveModule('products')}
-            />
+            <div className="p-4 sm:p-8 lg:p-10 max-w-7xl w-full mx-auto">
+              <AdminAnalyticsDashboard
+                onNavigateToOrders={() => setActiveModule('orders')}
+                onNavigateToProducts={() => setActiveModule('products')}
+              />
+            </div>
           )}
 
           {activeModule === 'orders' && (
-            <AdminOrderManagement
-              onShowToast={triggerToast}
-              onNavigateToStorefront={onNavigateToStorefront}
-            />
+            <div className="p-4 sm:p-8 lg:p-10 max-w-7xl w-full mx-auto">
+              <AdminOrderManagement
+                onShowToast={triggerToast}
+                onNavigateToStorefront={onNavigateToStorefront}
+              />
+            </div>
           )}
 
           {activeModule === 'products' && (
@@ -295,7 +410,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigateToStorefront
           )}
 
           {activeModule === 'customers' && (
-            <AdminCustomerManagement onShowToast={triggerToast} />
+            <div className="p-4 sm:p-8 lg:p-10 max-w-7xl w-full mx-auto">
+              <AdminCustomerManagement onShowToast={triggerToast} />
+            </div>
           )}
         </div>
       </main>

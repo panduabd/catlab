@@ -22,11 +22,15 @@ import {
   ExternalLink,
   RotateCcw,
   AlertTriangle,
+  AlertCircle,
   FileSpreadsheet,
   CheckCircle,
-  CalendarDays
+  CalendarDays,
+  Printer,
+  Info
 } from 'lucide-react';
 import { AdminHelpIcon, AdminTooltip } from './AdminTooltip';
+import { printInvoice } from '../../utils/printInvoice';
 
 export type PaymentStatus = 'Pending' | 'Paid' | 'Failed';
 export type OrderStatus = 'Awaiting Shipment' | 'Shipped' | 'Cancelled';
@@ -60,9 +64,20 @@ export interface OrderItem {
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
   status?: OrderStatus; // alias for compatibility
+  courier?: string;
   trackingNumber?: string;
   shippedAt?: string;
 }
+
+export const AVAILABLE_COURIERS = [
+  'Black Cat Yamato Delivery (黑貓宅急便)',
+  '7-Eleven CVS Logistics (統一超商門市取貨)',
+  'FamilyMart CVS Logistics (全家超商門市取貨)',
+  'Chunghwa Post (中華郵政快捷/包裹)',
+  'SF Express (順豐速運)',
+  'FedEx Express Worldwide',
+  'DHL Express'
+];
 
 const initialOrders: OrderItem[] = [
   {
@@ -76,6 +91,7 @@ const initialOrders: OrderItem[] = [
     postalCode: '10601',
     city: 'Taipei City',
     country: 'Taiwan',
+    courier: 'Black Cat Yamato Delivery (黑貓宅急便)',
     items: [
       {
         sku: 'CLP-KIT-01',
@@ -106,6 +122,7 @@ const initialOrders: OrderItem[] = [
     postalCode: '10557',
     city: 'Taipei City',
     country: 'Taiwan',
+    courier: 'Black Cat Yamato Delivery (黑貓宅急便)',
     items: [
       {
         sku: 'CLP-KIT-01',
@@ -146,6 +163,7 @@ const initialOrders: OrderItem[] = [
     postalCode: '30078',
     city: 'Hsinchu City',
     country: 'Taiwan',
+    courier: '7-Eleven CVS Logistics (統一超商門市取貨)',
     items: [
       {
         sku: 'CLP-KIT-01',
@@ -178,6 +196,7 @@ const initialOrders: OrderItem[] = [
     postalCode: '30264',
     city: 'Hsinchu County',
     country: 'Taiwan',
+    courier: 'Black Cat Yamato Delivery (黑貓宅急便)',
     items: [
       {
         sku: 'CLP-RFL-10P',
@@ -208,6 +227,7 @@ const initialOrders: OrderItem[] = [
     postalCode: '89345',
     city: 'Kinmen County',
     country: 'Taiwan',
+    courier: 'Chunghwa Post (中華郵政快捷/包裹)',
     items: [
       {
         sku: 'CLP-KIT-01',
@@ -240,6 +260,7 @@ const initialOrders: OrderItem[] = [
     postalCode: '40701',
     city: 'Taichung City',
     country: 'Taiwan',
+    courier: '7-Eleven CVS Logistics (統一超商門市取貨)',
     items: [
       {
         sku: 'CLP-KIT-01',
@@ -272,6 +293,7 @@ const initialOrders: OrderItem[] = [
     postalCode: '11052',
     city: 'Taipei City',
     country: 'Taiwan',
+    courier: 'Black Cat Yamato Delivery (黑貓宅急便)',
     items: [
       {
         sku: 'CLP-KIT-01',
@@ -290,6 +312,254 @@ const initialOrders: OrderItem[] = [
     paymentStatus: 'Failed',
     orderStatus: 'Cancelled',
     status: 'Cancelled'
+  },
+  {
+    id: 'ord-108',
+    orderNumber: '#CL-2026-8828',
+    createdAt: '2026-10-24 10:12',
+    customerName: 'Jessica Huang',
+    customerEmail: 'jessica.h@gmail.com',
+    customerPhone: '+886 911-223-344',
+    shippingAddress: '7-11 Ximen Store, No. 120, Chengdu Rd, Wanhua District',
+    postalCode: '10844',
+    city: 'Taipei City',
+    country: 'Taiwan',
+    courier: '7-Eleven CVS Logistics (統一超商門市取貨)',
+    items: [
+      {
+        sku: 'CLP-KIT-01',
+        title: 'CAT LAB+ Hydrophobic Cat Litter Kit',
+        variant: 'Complete 10-Parameter Kit',
+        quantity: 1,
+        price: 890,
+        weight: 420,
+        image: '/images/product.webp',
+        productId: 'prod-001'
+      }
+    ],
+    subtotal: 890,
+    shippingCost: 60,
+    total: 950,
+    paymentStatus: 'Paid',
+    orderStatus: 'Awaiting Shipment',
+    status: 'Awaiting Shipment'
+  },
+  {
+    id: 'ord-109',
+    orderNumber: '#CL-2026-8829',
+    createdAt: '2026-10-24 09:05',
+    customerName: 'Marcus Vance',
+    customerEmail: 'marcus.v@outlook.com',
+    customerPhone: '+886 920-334-556',
+    shippingAddress: 'No. 32, Section 1, Minsheng Rd, Banqiao District',
+    postalCode: '22047',
+    city: 'New Taipei City',
+    country: 'Taiwan',
+    courier: 'Black Cat Yamato Delivery (黑貓宅急便)',
+    items: [
+      {
+        sku: 'CLP-RFL-10P',
+        title: 'CAT LAB+ Urine Test Strip 10-Parameter Refill Pack',
+        variant: '10 Foil Packs / Box',
+        quantity: 2,
+        price: 490,
+        weight: 80,
+        image: '/images/product-front.webp',
+        productId: 'prod-002'
+      }
+    ],
+    subtotal: 980,
+    shippingCost: 0,
+    total: 980,
+    paymentStatus: 'Paid',
+    orderStatus: 'Awaiting Shipment',
+    status: 'Awaiting Shipment'
+  },
+  {
+    id: 'ord-110',
+    orderNumber: '#CL-2026-8830',
+    createdAt: '2026-10-24 08:40',
+    customerName: 'Chloe Lin',
+    customerEmail: 'chloe.lin@yahoo.com.tw',
+    customerPhone: '+886 935-445-566',
+    shippingAddress: 'FamilyMart Taichung Green Store, No. 78, Gongyi Rd, West District',
+    postalCode: '40356',
+    city: 'Taichung City',
+    country: 'Taiwan',
+    courier: 'FamilyMart CVS Logistics (全家超商門市取貨)',
+    items: [
+      {
+        sku: 'CLP-KIT-01',
+        title: 'CAT LAB+ Hydrophobic Cat Litter Kit',
+        variant: 'Complete 10-Parameter Kit',
+        quantity: 1,
+        price: 890,
+        weight: 420,
+        image: '/images/product.webp',
+        productId: 'prod-001'
+      }
+    ],
+    subtotal: 890,
+    shippingCost: 60,
+    total: 950,
+    paymentStatus: 'Paid',
+    orderStatus: 'Awaiting Shipment',
+    status: 'Awaiting Shipment'
+  },
+  {
+    id: 'ord-111',
+    orderNumber: '#CL-2026-8831',
+    createdAt: '2026-10-23 22:15',
+    customerName: 'Dr. Aris Thorne',
+    customerEmail: 'thorne.vet@gmail.com',
+    customerPhone: '+886 952-667-788',
+    shippingAddress: 'No. 15, Daxue Rd, East District',
+    postalCode: '70101',
+    city: 'Tainan City',
+    country: 'Taiwan',
+    courier: 'Chunghwa Post (中華郵政快捷/包裹)',
+    items: [
+      {
+        sku: 'CLP-KIT-01',
+        title: 'CAT LAB+ Hydrophobic Cat Litter Kit',
+        variant: 'Complete 10-Parameter Kit',
+        quantity: 3,
+        price: 890,
+        weight: 420,
+        image: '/images/product.webp',
+        productId: 'prod-001'
+      }
+    ],
+    subtotal: 2670,
+    shippingCost: 0,
+    total: 2670,
+    paymentStatus: 'Paid',
+    orderStatus: 'Awaiting Shipment',
+    status: 'Awaiting Shipment'
+  },
+  {
+    id: 'ord-112',
+    orderNumber: '#CL-2026-8832',
+    createdAt: '2026-10-23 20:30',
+    customerName: 'Sophia Wu',
+    customerEmail: 'sophia.wu@gmail.com',
+    customerPhone: '+886 963-778-899',
+    shippingAddress: 'No. 88, Zhonghua 4th Rd, Lingya District',
+    postalCode: '80248',
+    city: 'Kaohsiung City',
+    country: 'Taiwan',
+    courier: 'SF Express (順豐速運)',
+    items: [
+      {
+        sku: 'CLP-RFL-10P',
+        title: 'CAT LAB+ Urine Test Strip 10-Parameter Refill Pack',
+        variant: '10 Foil Packs / Box',
+        quantity: 1,
+        price: 490,
+        weight: 80,
+        image: '/images/product-front.webp',
+        productId: 'prod-002'
+      }
+    ],
+    subtotal: 490,
+    shippingCost: 80,
+    total: 570,
+    paymentStatus: 'Paid',
+    orderStatus: 'Awaiting Shipment',
+    status: 'Awaiting Shipment'
+  },
+  {
+    id: 'ord-113',
+    orderNumber: '#CL-2026-8833',
+    createdAt: '2026-10-23 19:10',
+    customerName: 'Brian Tsai',
+    customerEmail: 'brian.tsai@outlook.com',
+    customerPhone: '+886 974-889-900',
+    shippingAddress: 'No. 200, Zhongzheng Rd, Taoyuan District',
+    postalCode: '33045',
+    city: 'Taoyuan City',
+    country: 'Taiwan',
+    courier: 'Black Cat Yamato Delivery (黑貓宅急便)',
+    items: [
+      {
+        sku: 'CLP-KIT-01',
+        title: 'CAT LAB+ Hydrophobic Cat Litter Kit',
+        variant: 'Complete 10-Parameter Kit',
+        quantity: 1,
+        price: 890,
+        weight: 420,
+        image: '/images/product.webp',
+        productId: 'prod-001'
+      }
+    ],
+    subtotal: 890,
+    shippingCost: 0,
+    total: 890,
+    paymentStatus: 'Paid',
+    orderStatus: 'Awaiting Shipment',
+    status: 'Awaiting Shipment'
+  },
+  {
+    id: 'ord-114',
+    orderNumber: '#CL-2026-8834',
+    createdAt: '2026-10-23 17:45',
+    customerName: 'Grace Chang',
+    customerEmail: 'grace.c@yahoo.com',
+    customerPhone: '+886 985-990-011',
+    shippingAddress: '7-11 Tsinghua Store, No. 101, Kuang-Fu Rd, East District',
+    postalCode: '30013',
+    city: 'Hsinchu City',
+    country: 'Taiwan',
+    courier: '7-Eleven CVS Logistics (統一超商門市取貨)',
+    items: [
+      {
+        sku: 'CLP-RFL-10P',
+        title: 'CAT LAB+ Urine Test Strip 10-Parameter Refill Pack',
+        variant: '10 Foil Packs / Box',
+        quantity: 2,
+        price: 490,
+        weight: 80,
+        image: '/images/product-front.webp',
+        productId: 'prod-002'
+      }
+    ],
+    subtotal: 980,
+    shippingCost: 60,
+    total: 1040,
+    paymentStatus: 'Paid',
+    orderStatus: 'Awaiting Shipment',
+    status: 'Awaiting Shipment'
+  },
+  {
+    id: 'ord-115',
+    orderNumber: '#CL-2026-8835',
+    createdAt: '2026-10-23 16:20',
+    customerName: 'Oliver Kuo',
+    customerEmail: 'oliver.kuo@gmail.com',
+    customerPhone: '+886 996-001-122',
+    shippingAddress: 'No. 66, Ren 1st Rd, Renai District',
+    postalCode: '20041',
+    city: 'Keelung City',
+    country: 'Taiwan',
+    courier: 'FedEx Express Worldwide',
+    items: [
+      {
+        sku: 'CLP-KIT-01',
+        title: 'CAT LAB+ Hydrophobic Cat Litter Kit',
+        variant: 'Complete 10-Parameter Kit',
+        quantity: 2,
+        price: 890,
+        weight: 420,
+        image: '/images/product.webp',
+        productId: 'prod-001'
+      }
+    ],
+    subtotal: 1780,
+    shippingCost: 150,
+    total: 1930,
+    paymentStatus: 'Paid',
+    orderStatus: 'Awaiting Shipment',
+    status: 'Awaiting Shipment'
   }
 ];
 
@@ -327,6 +597,9 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
   // Single Order Modal State
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
   const [waybillInput, setWaybillInput] = useState('');
+  const [courierInput, setCourierInput] = useState('Black Cat Yamato Delivery (黑貓宅急便)');
+  const [isEditingCourier, setIsEditingCourier] = useState(false);
+  const [isEditingTracking, setIsEditingTracking] = useState(false);
   const [isSubmittingFulfillment, setIsSubmittingFulfillment] = useState(false);
 
   // Copied state: 'contact' | 'address' | null
@@ -481,12 +754,16 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
     }
   };
 
-  // Export CSV
+  // Export CSV with full sample dataset & Blob download (Excel/Numbers/Google Sheets compatible)
   const handleExportCSV = () => {
+    // If specific orders selected, export those. Otherwise export current filtered orders.
+    // If no filtered orders, fallback to all initial demo orders so sample data is always available.
     const targetOrders =
       selectedOrderIds.length > 0
         ? orders.filter((o) => selectedOrderIds.includes(o.id))
-        : filteredOrders;
+        : filteredOrders.length > 0
+        ? filteredOrders
+        : orders;
 
     if (targetOrders.length === 0) {
       alert('No orders available to export.');
@@ -495,11 +772,15 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
 
     const headers = [
       'Order ID',
+      'Order Date',
       'Recipient Name',
+      'Customer Email',
       'Phone Number',
       'Delivery Address',
       'Postal Code',
       'City',
+      'Country',
+      'Courier',
       'Items Summary',
       'Total Weight (g)',
       'Total Amount (TWD)',
@@ -512,32 +793,74 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
       const itemSummary = o.items.map((i) => `${i.title} (${i.quantity}x)`).join('; ');
       const totalWeight = o.items.reduce((acc, curr) => acc + curr.weight * curr.quantity, 0);
 
+      // Tracking number is ONLY populated if order is already 'Shipped'.
+      // Orders in 'Awaiting Shipment' or other non-shipped statuses must remain empty ("").
+      const trackingValue = o.orderStatus === 'Shipped' ? (o.trackingNumber || '') : '';
+
       return [
         `"${o.orderNumber}"`,
-        `"${o.customerName}"`,
+        `"${o.createdAt}"`,
+        `"${o.customerName.replace(/"/g, '""')}"`,
+        `"${o.customerEmail.replace(/"/g, '""')}"`,
         `"${o.customerPhone}"`,
         `"${o.shippingAddress.replace(/"/g, '""')}"`,
         `"${o.postalCode}"`,
         `"${o.city}"`,
+        `"${o.country || 'Taiwan'}"`,
+        `"${(o.courier || '').replace(/"/g, '""')}"`,
         `"${itemSummary.replace(/"/g, '""')}"`,
         totalWeight,
         o.total,
         `"${o.paymentStatus}"`,
         `"${o.orderStatus}"`,
-        `"${o.trackingNumber || ''}"`
+        `"${trackingValue}"`
       ];
     });
 
+    // Generate CSV string with UTF-8 BOM (\uFEFF) and CRLF (\r\n) for complete multi-platform compatibility
     const csvContent =
-      'data:text/csv;charset=utf-8,\uFEFF' +
-      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+      '\uFEFF' +
+      [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', url);
     link.setAttribute('download', `orders_export_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    if (onShowToast) {
+      onShowToast(`Exported ${targetOrders.length} order(s) with sample data to CSV.`);
+    }
+  };
+
+  // Download / Print Invoice (PDF Preview)
+  const handleDownloadInvoice = (order: OrderItem) => {
+    printInvoice({
+      orderNumber: order.orderNumber,
+      date: order.createdAt,
+      customerName: order.customerName,
+      customerEmail: order.customerEmail,
+      customerPhone: order.customerPhone,
+      shippingAddress: order.shippingAddress,
+      paymentStatus: order.paymentStatus,
+      orderStatus: order.orderStatus,
+      courier: order.courier,
+      trackingNumber: order.trackingNumber,
+      items: order.items.map((it) => ({
+        name: it.title,
+        quantity: it.quantity,
+        price: it.price,
+        variant: it.variant
+      })),
+      subtotal: order.items.reduce((sum, it) => sum + it.price * it.quantity, 0),
+      shipping: order.shippingCost,
+      total: order.total,
+      currencySymbol: 'NT$ '
+    });
   };
 
   // Direct In-Row Tracking Submission via Check Icon
@@ -607,26 +930,105 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
     );
   };
 
-  // Modal Waybill Submit: IMMEDIATELY CLOSES MODAL and returns to Order Management
+  // Open order detail modal and initialize courier & tracking states
+  const handleOpenOrderDetail = (order: OrderItem) => {
+    setSelectedOrder(order);
+    setCourierInput(order.courier || 'Black Cat Yamato Delivery (黑貓宅急便)');
+    setIsEditingCourier(false);
+    setWaybillInput(order.trackingNumber || '');
+    setIsEditingTracking(false);
+  };
+
+  // Admin applies courier change
+  const handleApplyCourierChange = () => {
+    if (!selectedOrder) return;
+    const finalCourier = courierInput.trim() || 'Black Cat Yamato Delivery (黑貓宅急便)';
+    const currentOrderNum = selectedOrder.orderNumber;
+
+    setOrders((prev) =>
+      prev.map((o) => (o.id === selectedOrder.id ? { ...o, courier: finalCourier } : o))
+    );
+    setSelectedOrder((prev) => (prev ? { ...prev, courier: finalCourier } : null));
+    setIsEditingCourier(false);
+
+    onShowToast?.(`Courier for ${currentOrderNum} updated to ${finalCourier}.`);
+  };
+
+  // Admin cancels courier change
+  const handleCancelCourierChange = () => {
+    if (!selectedOrder) return;
+    setCourierInput(selectedOrder.courier || 'Black Cat Yamato Delivery (黑貓宅急便)');
+    setIsEditingCourier(false);
+  };
+
+  // Admin applies tracking number change (PRESERVES original shipped timestamp)
+  const handleApplyTrackingChange = () => {
+    if (!selectedOrder) return;
+    const newTracking = waybillInput.trim();
+    if (!newTracking) {
+      alert('Tracking number cannot be empty.');
+      return;
+    }
+    const currentOrderNum = selectedOrder.orderNumber;
+
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id === selectedOrder.id) {
+          return {
+            ...o,
+            trackingNumber: newTracking,
+            // CRITICAL: Preserve original shippedAt timestamp, NEVER reset it
+            shippedAt: o.shippedAt || new Date().toISOString().replace('T', ' ').slice(0, 16)
+          };
+        }
+        return o;
+      })
+    );
+
+    setSelectedOrder((prev) =>
+      prev
+        ? {
+            ...prev,
+            trackingNumber: newTracking,
+            shippedAt: prev.shippedAt || new Date().toISOString().replace('T', ' ').slice(0, 16)
+          }
+        : null
+    );
+    setIsEditingTracking(false);
+
+    onShowToast?.(`Tracking number for ${currentOrderNum} updated to ${newTracking}. Shipped timestamp preserved.`);
+  };
+
+  // Admin cancels tracking number change
+  const handleCancelTrackingChange = () => {
+    if (!selectedOrder) return;
+    setWaybillInput(selectedOrder.trackingNumber || '');
+    setIsEditingTracking(false);
+  };
+
+  // Modal Waybill & Courier Submit: IMMEDIATELY CLOSES MODAL and returns to Order Management
   const handleModalFulfillWaybill = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrder || !waybillInput.trim()) return;
+
+    const finalCourier = courierInput.trim() || selectedOrder.courier || 'Black Cat Yamato Delivery (黑貓宅急便)';
+    const tracking = waybillInput.trim();
 
     setIsSubmittingFulfillment(true);
 
     setTimeout(() => {
       const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 16);
-      const tracking = waybillInput.trim();
       const currentOrderNum = selectedOrder.orderNumber;
 
       const updatedList = orders.map((o) => {
         if (o.id === selectedOrder.id) {
           return {
             ...o,
+            courier: finalCourier,
             trackingNumber: tracking,
             orderStatus: 'Shipped' as const,
             status: 'Shipped' as const,
-            shippedAt: nowStr
+            shippedAt: o.shippedAt || nowStr
           };
         }
         return o;
@@ -639,7 +1041,7 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
       // ONLY show the bottom floating toast (Undo bar), NO top-right notification
       triggerStatusChangeWithUndo(
         updatedList,
-        `Order ${currentOrderNum} updated to Shipped.`
+        `Order ${currentOrderNum} updated (${finalCourier} • Tracking: ${tracking}).`
       );
     }, 250);
   };
@@ -647,23 +1049,82 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
   // Handle Sample CSV for Prototype Testing (Dev/Programmer only indicator)
   const handleLoadDemoCSV = () => {
     const pendingOrders = orders.filter((o) => o.orderStatus === 'Awaiting Shipment');
-    if (pendingOrders.length === 0) {
-      setImportError('No orders are currently in Awaiting Shipment status to test demo import.');
-      return;
-    }
 
-    const demoRows = pendingOrders.map((ord, idx) => ({
-      orderNumber: ord.orderNumber,
-      customerName: ord.customerName,
-      currentPaymentStatus: ord.paymentStatus,
-      currentOrderStatus: ord.orderStatus,
-      newTracking: `711-TW-98${idx}10${Math.floor(100 + Math.random() * 900)}`,
-      isValid: true,
-      orderId: ord.id
-    }));
+    // Generate matched rows for all pending orders with realistic courier tracking codes
+    const matchedRows = pendingOrders.map((ord, idx) => {
+      const tracking =
+        ord.courier?.includes('7-Eleven')
+          ? `711-TW-98${1000 + idx * 83}`
+          : ord.courier?.includes('FamilyMart')
+          ? `FM-TW-49${2000 + idx * 71}`
+          : ord.courier?.includes('Chunghwa')
+          ? `POST-TW-82019${20 + idx}`
+          : ord.courier?.includes('SF Express')
+          ? `SF-TW-902188${40 + idx}`
+          : ord.courier?.includes('FedEx')
+          ? `FDX-TW-109283${10 + idx}`
+          : `TCAT-849102${910 + idx}`;
 
-    setImportParsedRows(demoRows);
+      return {
+        orderNumber: ord.orderNumber,
+        customerName: ord.customerName,
+        currentPaymentStatus: ord.paymentStatus,
+        currentOrderStatus: ord.orderStatus,
+        newTracking: tracking,
+        isValid: true,
+        orderId: ord.id
+      };
+    });
+
+    // Add 2 unmatched sample rows to also demonstrate validation preview
+    const unmatchedRows = [
+      {
+        orderNumber: '#CL-2026-9901',
+        customerName: 'External Platform Order',
+        currentPaymentStatus: 'Paid' as const,
+        currentOrderStatus: 'Awaiting Shipment' as const,
+        newTracking: 'TCAT-998811223',
+        isValid: false
+      },
+      {
+        orderNumber: '#CL-2026-9902',
+        customerName: 'Shopee TW Outlet Order',
+        currentPaymentStatus: 'Paid' as const,
+        currentOrderStatus: 'Awaiting Shipment' as const,
+        newTracking: '711-TW-998833445',
+        isValid: false
+      }
+    ];
+
+    const allDemoRows = [...matchedRows, ...unmatchedRows];
+
+    setImportParsedRows(allDemoRows);
     setImportError(null);
+  };
+
+  // Robust CSV Line Parser (handles quotes with nested commas & double-quote escapes)
+  const parseCSVLine = (line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let k = 0; k < line.length; k++) {
+      const char = line[k];
+      if (char === '"') {
+        if (inQuotes && line[k + 1] === '"') {
+          current += '"';
+          k++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result;
   };
 
   // Handle Actual CSV File Upload & Parsing
@@ -688,6 +1149,12 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
           return;
         }
 
+        // Dynamically identify order and tracking column indices from header
+        const rawHeaderCols = parseCSVLine(lines[0]);
+        const headerCols = rawHeaderCols.map((h) => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
+        const orderIdColIdx = headerCols.findIndex((h) => h.includes('order') || h.includes('id'));
+        const trackingColIdx = headerCols.findIndex((h) => h.includes('tracking'));
+
         const parsed: Array<{
           orderNumber: string;
           customerName: string;
@@ -698,11 +1165,14 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
           orderId?: string;
         }> = [];
 
-        // Skip header line
+        // Process data rows
         for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(',').map((c) => c.replace(/^["']|["']$/g, '').trim());
-          const orderNum = cols[0];
-          const tracking = cols[11] || cols[10] || cols[1] || cols[cols.length - 1] || '';
+          const cols = parseCSVLine(lines[i]);
+          const rawOrderNum = orderIdColIdx !== -1 && cols[orderIdColIdx] ? cols[orderIdColIdx] : cols[0];
+          const rawTracking = trackingColIdx !== -1 && cols[trackingColIdx] ? cols[trackingColIdx] : cols[cols.length - 1];
+
+          const orderNum = rawOrderNum?.replace(/^["']|["']$/g, '').trim();
+          const tracking = rawTracking?.replace(/^["']|["']$/g, '').trim();
 
           if (orderNum) {
             const matched = orders.find(
@@ -1211,16 +1681,15 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
 
                       {/* Order ID: Formatted like #CL-2026-8821 */}
                       <td className="py-4 px-3 font-mono font-bold text-gray-900 whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setWaybillInput(order.trackingNumber || '');
-                          }}
-                          className="hover:underline text-charcoal hover:text-black cursor-pointer text-left"
-                        >
-                          {order.orderNumber}
-                        </button>
+                        <AdminTooltip content="Click to view full order details">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenOrderDetail(order)}
+                            className="hover:underline text-charcoal hover:text-black cursor-pointer text-left font-mono font-bold"
+                          >
+                            {order.orderNumber}
+                          </button>
+                        </AdminTooltip>
                       </td>
 
                       {/* Timestamp */}
@@ -1258,7 +1727,7 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
                       </td>
 
                       {/* ============================================================= */}
-                      {/* TRACKING NUMBER: If Payment is Pending, show placeholder      */}
+                      {/* TRACKING NUMBER & COURIER                                      */}
                       {/* ============================================================= */}
                       <td className="py-4 px-3">
                         {order.paymentStatus === 'Pending' ? (
@@ -1266,34 +1735,65 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
                             Awaiting payment
                           </span>
                         ) : order.orderStatus === 'Awaiting Shipment' ? (
-                          <div className="flex items-center gap-1.5">
-                            <input
-                              type="text"
-                              value={inlineTrackingInputs[order.id] ?? ''}
-                              onChange={(e) =>
-                                setInlineTrackingInputs({
-                                  ...inlineTrackingInputs,
-                                  [order.id]: e.target.value
-                                })
-                              }
-                              placeholder="e.g. 711-TW-98421039"
-                              className="h-8 w-38 rounded-lg border border-gray-300 bg-white px-2.5 font-mono text-xs text-gray-900 placeholder:font-sans placeholder-gray-400 focus:outline-none focus:border-charcoal focus:ring-2 focus:ring-yellow/20"
-                            />
-                            <AdminTooltip content="Save tracking & mark as Shipped">
-                              <button
-                                type="button"
-                                onClick={() => handleInitiateInlineShip(order)}
-                                className="h-8 w-8 flex items-center justify-center rounded-lg bg-charcoal hover:bg-black text-white cursor-pointer transition-all active:scale-95 shrink-0 shadow-2xs"
-                                aria-label="Mark as Shipped"
+                          <div>
+                            {order.courier && (
+                              <span
+                                className="text-[10px] text-gray-500 font-medium block mb-1 truncate max-w-[170px]"
+                                title={order.courier}
                               >
-                                <Check className="h-4 w-4 text-yellow" />
-                              </button>
-                            </AdminTooltip>
+                                {order.courier}
+                              </span>
+                            )}
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                type="text"
+                                value={inlineTrackingInputs[order.id] ?? ''}
+                                onChange={(e) =>
+                                  setInlineTrackingInputs({
+                                    ...inlineTrackingInputs,
+                                    [order.id]: e.target.value
+                                  })
+                                }
+                                onKeyDown={(e) => {
+                                  if (
+                                    e.key === 'Enter' &&
+                                    Boolean(inlineTrackingInputs[order.id]?.trim())
+                                  ) {
+                                    e.preventDefault();
+                                    handleInitiateInlineShip(order);
+                                  }
+                                }}
+                                placeholder="e.g. 711-TW-98421039"
+                                className="h-8 w-38 rounded-lg border border-gray-300 bg-white px-2.5 font-mono text-xs text-gray-900 placeholder:font-sans placeholder-gray-400 focus:outline-none focus:border-charcoal focus:ring-2 focus:ring-yellow/20 transition-all"
+                              />
+                              {Boolean(inlineTrackingInputs[order.id]?.trim()) && (
+                                <AdminTooltip content="Save tracking & mark as Shipped">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleInitiateInlineShip(order)}
+                                    className="h-8 w-8 flex items-center justify-center rounded-lg bg-charcoal hover:bg-black text-white cursor-pointer transition-all active:scale-95 shrink-0 shadow-2xs animate-in fade-in zoom-in-95 duration-150"
+                                    aria-label="Mark as Shipped"
+                                  >
+                                    <Check className="h-4 w-4 text-yellow" />
+                                  </button>
+                                </AdminTooltip>
+                              )}
+                            </div>
                           </div>
                         ) : order.orderStatus === 'Shipped' ? (
-                          <span className="font-mono text-xs bg-emerald-50 text-emerald-800 font-semibold px-2 py-0.5 rounded border border-emerald-200">
-                            {order.trackingNumber}
-                          </span>
+                          <div>
+                            {order.courier && (
+                              <span
+                                className="text-[10px] text-gray-500 font-medium block truncate max-w-[170px]"
+                                title={order.courier}
+                              >
+                                {order.courier}
+                              </span>
+                            )}
+                            <span className="font-mono text-xs bg-emerald-50 text-emerald-800 font-semibold px-2 py-0.5 rounded border border-emerald-200 inline-block mt-0.5">
+                              {order.trackingNumber}
+                            </span>
+                          </div>
                         ) : (
                           <span className="text-gray-400 italic text-xs">
                             Cancelled
@@ -1303,13 +1803,10 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
 
                       {/* Actions: View Detail Modal */}
                       <td className="py-4 pr-4 sm:pr-6 pl-3 text-right whitespace-nowrap">
-                        <AdminTooltip content="View full order details and packaging checklist">
+                        <AdminTooltip content="View full order details and update fulfillment">
                           <button
                             type="button"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setWaybillInput(order.trackingNumber || '');
-                            }}
+                            onClick={() => handleOpenOrderDetail(order)}
                             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -1401,15 +1898,27 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
                 </p>
               </div>
 
-              {/* Close Button Only */}
-              <button
-                type="button"
-                onClick={() => setSelectedOrder(null)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors cursor-pointer"
-                aria-label="Close modal"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              {/* Action Buttons: Download Invoice & Close */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleDownloadInvoice(selectedOrder)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-2xs transition-all cursor-pointer hover:border-gray-400 active:scale-[0.98]"
+                  title="Download Invoice / Print Preview PDF"
+                >
+                  <Printer className="h-3.5 w-3.5 text-gray-600" />
+                  <span>Download Invoice</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrder(null)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             {/* Customer & Shipping Details (WITH ICON-ONLY COPY BUTTONS) */}
@@ -1481,20 +1990,28 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
                 <p className="text-xs text-gray-500">
                   {selectedOrder.city}, Postal Code: {selectedOrder.postalCode} ({selectedOrder.country})
                 </p>
+
+                {/* Assigned Courier Display */}
+                <div className="mt-2.5 pt-2 border-t border-gray-200/70 flex items-center justify-between text-xs">
+                  <span className="text-gray-500 font-medium flex items-center gap-1.5">
+                    <Truck className="h-3.5 w-3.5 text-gray-400" />
+                    <span>Courier Service:</span>
+                  </span>
+                  <span className="font-semibold text-gray-900 bg-white px-2 py-0.5 rounded border border-gray-200 shadow-2xs">
+                    {selectedOrder.courier || courierInput || 'Black Cat Yamato Delivery (黑貓宅急便)'}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* =================================================================== */}
-            {/* WAREHOUSE PACKING CHECKLIST & ITEM BREAKDOWN (STRONGLY HIGHLIGHTED) */}
+            {/* ORDER DETAIL & ITEM BREAKDOWN                                       */}
             {/* =================================================================== */}
             <div className="rounded-2xl border-2 border-yellow/60 bg-amber-50/20 p-5 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-amber-200/70">
                 <div className="flex items-center gap-2">
                   <span className="flex h-6 px-2.5 items-center justify-center rounded-md bg-charcoal text-yellow font-extrabold text-[11px] uppercase tracking-wider">
-                    Packing Checklist
-                  </span>
-                  <span className="text-xs font-bold text-gray-700">
-                    Verify physical items before sealing package
+                    ORDER DETAIL
                   </span>
                 </div>
                 <span className="text-xs font-semibold text-gray-500">
@@ -1572,47 +2089,168 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
             </div>
 
             {/* =================================================================== */}
-            {/* COURIER TRACKING: Apply Changes CLOSES MODAL DIRECTLY               */}
+            {/* COURIER LOGISTICS & FULFILLMENT                                     */}
             {/* =================================================================== */}
-            <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4 sm:p-5 space-y-3">
+            <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4 sm:p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
-                  Courier Tracking & Fulfillment
-                </h4>
-                <AdminHelpIcon text="Saving the tracking number will update the order status to Shipped and immediately close this modal back to Order Management." />
+                <div className="flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-charcoal" />
+                  <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                    Courier Logistics & Fulfillment
+                  </h4>
+                </div>
+                <AdminHelpIcon text="Update assigned courier or enter tracking number to fulfill order." />
               </div>
 
-              <form onSubmit={handleModalFulfillWaybill} className="space-y-3">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    required
-                    value={waybillInput}
-                    onChange={(e) => setWaybillInput(e.target.value)}
-                    placeholder="e.g. 711-TW-98421039 or TCAT-849102910"
-                    className="flex-1 h-11 rounded-xl border border-gray-300 bg-white px-3.5 font-mono text-xs sm:text-sm text-gray-900 placeholder-gray-400 focus:border-charcoal focus:ring-4 focus:ring-yellow/20 focus:outline-none transition-all"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isSubmittingFulfillment}
-                    className="h-11 rounded-xl bg-charcoal hover:bg-black text-white px-5 text-xs font-bold shadow-sm transition-all active:scale-[0.99] cursor-pointer disabled:opacity-60 shrink-0"
-                  >
-                    {isSubmittingFulfillment ? (
-                      <span>Saving & Closing...</span>
-                    ) : selectedOrder.orderStatus === 'Shipped' ? (
-                      <span>Apply Changes</span>
+              <div className="space-y-3.5">
+                {/* 1. Single Courier Dropdown Field + Change Courier / Apply & Cancel Buttons */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                    Courier
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      disabled={!isEditingCourier}
+                      value={courierInput}
+                      onChange={(e) => setCourierInput(e.target.value)}
+                      className={`flex-1 h-11 rounded-xl border px-3.5 text-xs sm:text-sm font-medium transition-all ${
+                        isEditingCourier
+                          ? 'border-charcoal bg-white text-gray-900 focus:ring-4 focus:ring-yellow/20 focus:outline-none cursor-pointer'
+                          : 'border-gray-200 bg-gray-100 text-gray-600 cursor-not-allowed opacity-90'
+                      }`}
+                    >
+                      {AVAILABLE_COURIERS.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                      {!AVAILABLE_COURIERS.includes(courierInput) && courierInput && (
+                        <option value={courierInput}>{courierInput}</option>
+                      )}
+                    </select>
+
+                    {!isEditingCourier ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingCourier(true)}
+                        className="h-11 rounded-xl border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 px-4 text-xs font-semibold shadow-2xs transition-all active:scale-[0.98] cursor-pointer shrink-0"
+                      >
+                        Change Courier
+                      </button>
                     ) : (
-                      <span>Update to Shipped</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={handleApplyCourierChange}
+                          className="h-11 rounded-xl bg-charcoal hover:bg-black text-white px-4 text-xs font-bold shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                        >
+                          Apply
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelCourierChange}
+                          className="h-11 rounded-xl border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 px-3.5 text-xs font-semibold shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     )}
-                  </button>
+                  </div>
                 </div>
 
-                {selectedOrder.shippedAt && (
-                  <p className="text-[11px] text-gray-500">
-                    Active Tracking: <strong className="font-mono text-gray-800">{selectedOrder.trackingNumber}</strong> (Shipped on {selectedOrder.shippedAt})
-                  </p>
-                )}
-              </form>
+                {/* 2. Tracking Number Field + Change Tracking / Apply & Cancel Buttons */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                    Tracking Number
+                  </label>
+
+                  {/* If tracking number is already inputted */}
+                  {selectedOrder.trackingNumber ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        disabled={!isEditingTracking}
+                        value={waybillInput}
+                        onChange={(e) => setWaybillInput(e.target.value)}
+                        placeholder="e.g. 711-TW-98421039 or TCAT-849102910"
+                        className={`flex-1 h-11 rounded-xl border px-3.5 font-mono text-xs sm:text-sm transition-all ${
+                          isEditingTracking
+                            ? 'border-charcoal bg-white text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-yellow/20 focus:outline-none'
+                            : 'border-gray-200 bg-gray-100 text-gray-600 cursor-not-allowed opacity-90'
+                        }`}
+                      />
+
+                      {!isEditingTracking ? (
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingTracking(true)}
+                          className="h-11 rounded-xl border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 px-4 text-xs font-semibold shadow-2xs transition-all active:scale-[0.98] cursor-pointer shrink-0"
+                        >
+                          Change Tracking
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={handleApplyTrackingChange}
+                            className="h-11 rounded-xl bg-charcoal hover:bg-black text-white px-4 text-xs font-bold shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                          >
+                            Apply
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelTrackingChange}
+                            className="h-11 rounded-xl border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 px-3.5 text-xs font-semibold shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* Initial Waybill Fulfillment when tracking number is not yet inputted */
+                    <form onSubmit={handleModalFulfillWaybill} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        required
+                        value={waybillInput}
+                        onChange={(e) => setWaybillInput(e.target.value)}
+                        placeholder="e.g. 711-TW-98421039 or TCAT-849102910"
+                        className="flex-1 h-11 rounded-xl border border-gray-300 bg-white px-3.5 font-mono text-xs sm:text-sm text-gray-900 placeholder-gray-400 focus:border-charcoal focus:ring-4 focus:ring-yellow/20 focus:outline-none transition-all"
+                      />
+
+                      <button
+                        type="submit"
+                        disabled={isSubmittingFulfillment}
+                        className="h-11 rounded-xl bg-charcoal hover:bg-black text-white px-5 text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer disabled:opacity-60 shrink-0"
+                      >
+                        {isSubmittingFulfillment ? (
+                          <span>Saving...</span>
+                        ) : (
+                          <span>Update to Shipped</span>
+                        )}
+                      </button>
+                    </form>
+                  )}
+
+                  {/* Active Tracking & Shipped Timestamp Info with Note (ONLY visible when tracking number has already been inputted & applied) */}
+                  {selectedOrder.trackingNumber && (
+                    <div className="mt-2.5 space-y-1.5 pt-0.5 animate-in fade-in duration-150">
+                      {selectedOrder.shippedAt && (
+                        <p className="text-[11px] text-gray-600">
+                          Active Tracking: <strong className="font-mono text-gray-900">{selectedOrder.trackingNumber}</strong> (Shipped on {selectedOrder.shippedAt})
+                        </p>
+                      )}
+                      <p className="text-[11px] text-gray-500 flex items-start gap-1.5 leading-relaxed">
+                        <Info className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" />
+                        <span>
+                          <strong>Note:</strong> Changes to the tracking number will not reset the previous shipped timestamp.
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1710,8 +2348,9 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
       {/* ========================================================================= */}
       {isImportModalOpen && (
         <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-gray-950/70 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-gray-200 bg-white p-6 sm:p-8 shadow-2xl space-y-6">
-            <div className="flex items-start justify-between pb-4 border-b border-gray-100">
+          <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl border border-gray-200 bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+            {/* Modal Header (Pinned at top) */}
+            <div className="flex items-start justify-between p-6 sm:p-8 pb-4 border-b border-gray-100 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-charcoal text-yellow">
                   <FileSpreadsheet className="h-5 w-5" />
@@ -1735,139 +2374,137 @@ export const AdminOrderManagement: React.FC<AdminOrderManagementProps> = ({
               </button>
             </div>
 
-            {/* Instructions Banner with Strong Emphasis: ONLY Tracking Number Changes */}
-            <div className="rounded-2xl bg-blue-50/80 border border-blue-200 p-4 text-xs text-blue-900 space-y-2.5 leading-relaxed">
-              <div className="rounded-xl bg-amber-50 border border-amber-300/80 p-3 text-amber-900 font-semibold text-xs flex items-start gap-2.5 shadow-2xs">
-                <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-extrabold uppercase tracking-wide block text-amber-950 mb-0.5">
-                    Critical Notice:
-                  </span>
+            {/* Modal Scrollable Body */}
+            <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-5">
+              {/* Instructions Banner: Directly integrated note + steps */}
+              <div className="rounded-2xl bg-blue-50/80 border border-blue-200 p-4 text-xs text-blue-900 space-y-3 leading-relaxed">
+                <div className="flex items-start gap-2.5 text-blue-950 font-medium">
+                  <AlertCircle className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                   <span>
                     Only the <strong>Tracking Number</strong> is updated by this CSV import. Customer details, shipping addresses, items, and pricing remain unchanged, and order status will automatically transition to <strong>Shipped</strong>.
                   </span>
                 </div>
+
+                <ol className="list-decimal list-inside space-y-1 text-blue-800 pt-2 border-t border-blue-200/70">
+                  <li>Download your exported CSV file containing pending orders.</li>
+                  <li>Ensure columns include <code className="font-bold font-mono text-blue-950">Order ID</code> and <code className="font-bold font-mono text-blue-950">Tracking Number</code>.</li>
+                  <li>Upload your file below, review the validation preview, and click Apply.</li>
+                </ol>
               </div>
 
-              <ol className="list-decimal list-inside space-y-1 text-blue-800 pt-0.5">
-                <li>Download your exported CSV file containing pending orders.</li>
-                <li>Ensure columns include <code className="font-bold font-mono text-blue-950">Order ID</code> and <code className="font-bold font-mono text-blue-950">Tracking Number</code>.</li>
-                <li>Upload your file below, review the validation preview, and click Apply.</li>
-              </ol>
-            </div>
-
-            {/* Upload Area / Dropzone */}
-            <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50/60 p-6 text-center space-y-3">
-              <Upload className="h-8 w-8 text-gray-400 mx-auto" />
-              <div>
-                <p className="text-xs font-bold text-gray-800">
-                  Choose a CSV file or drag and drop here
-                </p>
-                <p className="text-[11px] text-gray-500 mt-0.5">Supports .csv UTF-8 format</p>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept=".csv"
-                  onChange={handleCSVFileUpload}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="rounded-xl bg-charcoal hover:bg-black text-white px-4 py-2 text-xs font-semibold shadow-xs cursor-pointer"
-                >
-                  Browse CSV File
-                </button>
-                <span className="text-xs text-gray-400 font-medium">or</span>
-                <button
-                  type="button"
-                  onClick={handleLoadDemoCSV}
-                  className="rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 px-3.5 py-2 text-xs font-bold shadow-2xs cursor-pointer flex items-center gap-1.5 transition-all"
-                >
-                  <span>Load Demo CSV</span>
-                  <span className="text-[10px] font-mono uppercase bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-extrabold">
-                    Dev / Testing Only
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {importError && (
-              <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500" />
-                <span>{importError}</span>
-              </div>
-            )}
-
-            {/* Preview Table */}
-            {importParsedRows.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
-                    CSV Data Preview ({importParsedRows.length} Rows Detected)
-                  </h4>
-                  <span className="text-xs text-gray-500">
-                    {importParsedRows.filter((r) => r.isValid).length} ready to update
-                  </span>
+              {/* Upload Area / Dropzone */}
+              <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50/60 p-6 text-center space-y-3">
+                <Upload className="h-8 w-8 text-gray-400 mx-auto" />
+                <div>
+                  <p className="text-xs font-bold text-gray-800">
+                    Choose a CSV file or drag and drop here
+                  </p>
+                  <p className="text-[11px] text-gray-500 mt-0.5">Supports .csv UTF-8 format</p>
                 </div>
 
-                <div className="border border-gray-200 rounded-2xl overflow-hidden max-h-60 overflow-y-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 font-semibold select-none sticky top-0">
-                      <tr>
-                        <th className="py-2.5 px-3">Order ID</th>
-                        <th className="py-2.5 px-3">Customer</th>
-                        <th className="py-2.5 px-3">Status Transition</th>
-                        <th className="py-2.5 px-3">New Tracking</th>
-                        <th className="py-2.5 px-3 text-right">Validation</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {importParsedRows.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50">
-                          <td className="py-2.5 px-3 font-mono font-bold text-gray-900">
-                            {row.orderNumber}
-                          </td>
-                          <td className="py-2.5 px-3 text-gray-700">{row.customerName}</td>
-                          <td className="py-2.5 px-3">
-                            <span className="text-gray-500 line-through mr-1 text-[11px]">
-                              {row.currentOrderStatus}
-                            </span>
-                            <span className="font-bold text-emerald-700 text-[11px]">→ Shipped</span>
-                          </td>
-                          <td className="py-2.5 px-3 font-mono font-bold text-gray-800">
-                            {row.newTracking}
-                          </td>
-                          <td className="py-2.5 px-3 text-right">
-                            {row.isValid ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                <CheckCircle className="h-3 w-3" />
-                                <span>Matched</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                                <AlertTriangle className="h-3 w-3" />
-                                <span>Not Found</span>
-                              </span>
-                            )}
-                          </td>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept=".csv"
+                    onChange={handleCSVFileUpload}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="rounded-xl bg-charcoal hover:bg-black text-white px-4 py-2 text-xs font-semibold shadow-xs cursor-pointer"
+                  >
+                    Browse CSV File
+                  </button>
+                  <span className="text-xs text-gray-400 font-medium">or</span>
+                  <button
+                    type="button"
+                    onClick={handleLoadDemoCSV}
+                    className="rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 px-3.5 py-2 text-xs font-bold shadow-2xs cursor-pointer flex items-center gap-1.5 transition-all"
+                  >
+                    <span>Load Demo CSV</span>
+                    <span className="text-[10px] font-mono uppercase bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-extrabold">
+                      Dev / Testing Only
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {importError && (
+                <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500" />
+                  <span>{importError}</span>
+                </div>
+              )}
+
+              {/* Preview Table: Maximum 5 rows visible with independent scroll */}
+              {importParsedRows.length > 0 && (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                      CSV Data Preview ({importParsedRows.length} Rows Detected)
+                    </h4>
+                    <span className="text-xs text-gray-500 font-medium">
+                      {importParsedRows.filter((r) => r.isValid).length} ready to update
+                    </span>
+                  </div>
+
+                  <div className="border border-gray-200 rounded-2xl overflow-hidden max-h-[258px] overflow-y-auto shadow-2xs">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 font-semibold select-none sticky top-0 z-10 shadow-2xs">
+                        <tr>
+                          <th className="py-2.5 px-3.5">Order ID</th>
+                          <th className="py-2.5 px-3.5">Customer</th>
+                          <th className="py-2.5 px-3.5">Status Transition</th>
+                          <th className="py-2.5 px-3.5">New Tracking</th>
+                          <th className="py-2.5 px-3.5 text-right">Validation</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {importParsedRows.map((row, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50/80 transition-colors h-[44px]">
+                            <td className="py-2.5 px-3.5 font-mono font-bold text-gray-900">
+                              {row.orderNumber}
+                            </td>
+                            <td className="py-2.5 px-3.5 text-gray-700 font-medium">{row.customerName}</td>
+                            <td className="py-2.5 px-3.5 whitespace-nowrap">
+                              <span className="text-gray-500 line-through mr-1.5 text-[11px]">
+                                {row.currentOrderStatus}
+                              </span>
+                              <span className="font-bold text-emerald-700 text-[11px]">→ Shipped</span>
+                            </td>
+                            <td className="py-2.5 px-3.5 font-mono font-bold text-gray-800">
+                              {row.newTracking}
+                            </td>
+                            <td className="py-2.5 px-3.5 text-right whitespace-nowrap">
+                              {row.isValid ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                  <CheckCircle className="h-3 w-3" />
+                                  <span>Matched</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  <span>Not Found</span>
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            {/* Modal Actions */}
-            <div className="pt-2 flex items-center justify-end gap-3 border-t border-gray-100">
+            {/* Modal Actions (Pinned at bottom, never submerged!) */}
+            <div className="p-4 sm:p-5 px-6 sm:px-8 flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50/80 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsImportModalOpen(false)}
-                className="rounded-xl border border-gray-300 bg-white hover:bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700 cursor-pointer"
+                className="rounded-xl border border-gray-300 bg-white hover:bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700 cursor-pointer shadow-2xs"
               >
                 Cancel
               </button>

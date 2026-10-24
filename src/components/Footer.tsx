@@ -2,7 +2,9 @@ import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 
 interface FooterProps {
-  onNavigate: (view: 'home' | 'catalog' | 'product' | 'contact' | 'checkout' | 'account' | 'admin') => void;
+  onNavigate: (
+    view: 'home' | 'catalog' | 'product' | 'contact' | 'checkout' | 'account' | 'admin' | 'login' | 'register' | 'forgot-password'
+  ) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {

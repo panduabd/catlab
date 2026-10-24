@@ -25,14 +25,13 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     e.preventDefault();
     setError('');
 
-    // Password validation: minimum 8 characters, letters, numbers, and symbols
+    // Password validation: minimum 8 characters, letters, and symbols
     const hasMinLength = password.length >= 8;
     const hasLetter = /[A-Za-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
     const hasSymbol = /[^A-Za-z0-9]/.test(password);
 
-    if (!hasMinLength || !hasLetter || !hasNumber || !hasSymbol) {
-      setError('Password must be at least 8 characters and contain letters, numbers, and symbols.');
+    if (!hasMinLength || !hasLetter || !hasSymbol) {
+      setError('Password must be at least 8 characters and contain letters and symbols.');
       return;
     }
 
@@ -148,10 +147,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-gray-700">Password</label>
-              <span className="text-[10px] text-gray-400">Min 8 chars (letters, numbers, symbols)</span>
-            </div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Password</label>
             <div className="relative">
               <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
                 <Lock className="h-4 w-4" />
@@ -161,8 +157,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full h-11 rounded-xl border border-gray-300 bg-white pl-10 pr-3.5 text-xs sm:text-sm text-gray-900 shadow-2xs focus:border-charcoal focus:ring-4 focus:ring-yellow/20 focus:outline-none transition-all"
+                placeholder="Input your password..."
+                className="w-full h-11 rounded-xl border border-gray-300 bg-white pl-10 pr-3.5 text-xs sm:text-sm text-gray-900 focus:border-charcoal focus:ring-4 focus:ring-yellow/20 focus:outline-none transition-all placeholder:text-gray-400"
               />
             </div>
           </div>

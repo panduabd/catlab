@@ -63,12 +63,19 @@ export interface Order {
   };
 }
 
+export interface AuthResult {
+  success: boolean;
+  error?: string;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
   user: UserProfile;
   address: Address;
   orders: Order[];
-  login: () => void;
+  login: (email?: string, password?: string) => AuthResult;
+  register: (name: string, email: string, password: string) => AuthResult;
+  resetPassword: (email: string, newPass: string) => AuthResult;
   logout: () => void;
   updateProfile: (updated: Partial<UserProfile>) => void;
   updatePassword: (oldPass: string, newPass: string) => boolean;
@@ -85,7 +92,7 @@ const DEFAULT_USER: UserProfile = {
 };
 
 const DEFAULT_ADDRESS: Address = {
-  label: 'Home (Alamat Utama)',
+  label: 'Home (Primary Address)',
   recipientName: 'Sarah Jenkins',
   phone: '+1 (555) 234-5678',
   country: 'United States',
@@ -93,8 +100,7 @@ const DEFAULT_ADDRESS: Address = {
   city: 'Springfield',
   street: '742 Evergreen Terrace',
   apartment: 'Apt 4B',
-  postalCode: '97477',
-  deliveryNotes: 'Leave at front porch or parcel locker if unattended'
+  postalCode: '97477'
 };
 
 const INITIAL_ORDERS: Order[] = [
@@ -286,8 +292,145 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [address]);
 
-  const login = () => {
+  // Load / store registered accounts for prototype persistence
+  const getRegisteredUsers = (): Record<string, { name: string; email: string; passwordHash: string }> => {
+    try {
+      const stored = localStorage.getItem('catlab_registered_users');
+      if (stored) return JSON.parse(stored);
+    } catch {
+      // ignore
+    }
+    return {
+      'sarah.jenkins@catmail.com': {
+        name: 'Sarah Jenkins',
+        email: 'sarah.jenkins@catmail.com',
+        passwordHash: 'CatLab2026!'
+      }
+    };
+  };
+
+  const saveRegisteredUsers = (users: Record<string, { name: string; email: string; passwordHash: string }>) => {
+    try {
+      localStorage.setItem('catlab_registered_users', JSON.stringify(users));
+    } catch {
+      // ignore
+    }
+  };
+
+  const validatePasswordRule = (pwd: string): boolean => {
+    return pwd.length >= 8 && /[A-Za-z]/.test(pwd) && /[^A-Za-z0-9]/.test(pwd);
+  };
+
+  const login = (email?: string, password?: string): AuthResult => {
+    if (!email && !password) {
+      setIsAuthenticated(true);
+      return { success: true };
+    }
+
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPass = password || '';
+
+    if (!cleanEmail) {
+      return { success: false, error: 'Email address is required.' };
+    }
+
+    if (!validatePasswordRule(cleanPass)) {
+      return {
+        success: false,
+        error: 'Password must be at least 8 characters and include letters and symbols.'
+      };
+    }
+
+    const registered = getRegisteredUsers();
+    const existing = registered[cleanEmail];
+
+    if (existing && existing.passwordHash !== cleanPass) {
+      return { success: false, error: 'Invalid email or password.' };
+    }
+
+    // If new user or matching user, login
+    if (existing) {
+      setUser((prev) => ({
+        ...prev,
+        name: existing.name,
+        email: existing.email
+      }));
+    } else {
+      // Allow seamless prototype login
+      const namePart = cleanEmail.split('@')[0];
+      const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+      setUser((prev) => ({
+        ...prev,
+        name: capitalized,
+        email: cleanEmail
+      }));
+    }
+
     setIsAuthenticated(true);
+    return { success: true };
+  };
+
+  const register = (name: string, email: string, password: string): AuthResult => {
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = password;
+
+    if (!cleanName) {
+      return { success: false, error: 'Please enter your full name.' };
+    }
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { success: false, error: 'Please enter a valid email address.' };
+    }
+    if (!validatePasswordRule(cleanPass)) {
+      return {
+        success: false,
+        error: 'Password must be at least 8 characters and contain letters and symbols.'
+      };
+    }
+
+    const registered = getRegisteredUsers();
+    registered[cleanEmail] = {
+      name: cleanName,
+      email: cleanEmail,
+      passwordHash: cleanPass
+    };
+    saveRegisteredUsers(registered);
+
+    setUser((prev) => ({
+      ...prev,
+      name: cleanName,
+      email: cleanEmail
+    }));
+    setIsAuthenticated(true);
+    return { success: true };
+  };
+
+  const resetPassword = (email: string, newPass: string): AuthResult => {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { success: false, error: 'Please enter a valid email address.' };
+    }
+    if (!validatePasswordRule(newPass)) {
+      return {
+        success: false,
+        error: 'Password must be at least 8 characters and contain letters and symbols.'
+      };
+    }
+
+    const registered = getRegisteredUsers();
+    if (registered[cleanEmail]) {
+      registered[cleanEmail].passwordHash = newPass;
+      saveRegisteredUsers(registered);
+    } else {
+      registered[cleanEmail] = {
+        name: cleanEmail.split('@')[0],
+        email: cleanEmail,
+        passwordHash: newPass
+      };
+      saveRegisteredUsers(registered);
+    }
+
+    return { success: true };
   };
 
   const logout = () => {
@@ -298,7 +441,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser((prev) => ({ ...prev, ...updated }));
   };
 
-  const updatePassword = (_oldPass: string, _newPass: string) => {
+  const updatePassword = (_oldPass: string, newPass: string) => {
+    if (!validatePasswordRule(newPass)) {
+      return false;
+    }
     return true;
   };
 
@@ -314,6 +460,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         address,
         orders,
         login,
+        register,
+        resetPassword,
         logout,
         updateProfile,
         updatePassword,

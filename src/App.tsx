@@ -16,10 +16,21 @@ import { CatalogPage } from './components/CatalogPage';
 import { ProductDetailPage } from './components/ProductDetailPage';
 import { CheckoutPage } from './components/CheckoutPage';
 import { MyAccountPage } from './components/MyAccountPage';
+import { AuthPage } from './components/AuthPage';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { Footer } from './components/Footer';
 
-export type ViewMode = 'home' | 'catalog' | 'product' | 'contact' | 'checkout' | 'account' | 'admin';
+export type ViewMode =
+  | 'home'
+  | 'catalog'
+  | 'product'
+  | 'contact'
+  | 'checkout'
+  | 'account'
+  | 'admin'
+  | 'login'
+  | 'register'
+  | 'forgot-password';
 
 export const App: React.FC = () => {
   const [accountTab, setAccountTab] = useState<'orders' | 'profile' | 'address'>('orders');
@@ -33,6 +44,31 @@ export const App: React.FC = () => {
       hash === '#admin'
     ) {
       return 'admin';
+    }
+
+    if (
+      pathname.includes('/login') ||
+      hash === '#login'
+    ) {
+      return 'login';
+    }
+
+    if (
+      pathname.includes('/register') ||
+      pathname.includes('/signup') ||
+      hash === '#register' ||
+      hash === '#signup'
+    ) {
+      return 'register';
+    }
+
+    if (
+      pathname.includes('/forgot-password') ||
+      pathname.includes('/reset-password') ||
+      hash === '#forgot-password' ||
+      hash === '#reset-password'
+    ) {
+      return 'forgot-password';
     }
 
     if (
@@ -83,6 +119,27 @@ export const App: React.FC = () => {
     if (view === 'admin') {
       try {
         window.history.pushState(null, '', '/admin');
+      } catch {
+        // ignore
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (view === 'login') {
+      try {
+        window.history.pushState(null, '', '/login');
+      } catch {
+        // ignore
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (view === 'register') {
+      try {
+        window.history.pushState(null, '', '/register');
+      } catch {
+        // ignore
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (view === 'forgot-password') {
+      try {
+        window.history.pushState(null, '', '/forgot-password');
       } catch {
         // ignore
       }
@@ -159,6 +216,25 @@ export const App: React.FC = () => {
       ) {
         setCurrentView('admin');
       } else if (
+        pathname.includes('/login') ||
+        hash === '#login'
+      ) {
+        setCurrentView('login');
+      } else if (
+        pathname.includes('/register') ||
+        pathname.includes('/signup') ||
+        hash === '#register' ||
+        hash === '#signup'
+      ) {
+        setCurrentView('register');
+      } else if (
+        pathname.includes('/forgot-password') ||
+        pathname.includes('/reset-password') ||
+        hash === '#forgot-password' ||
+        hash === '#reset-password'
+      ) {
+        setCurrentView('forgot-password');
+      } else if (
         pathname.includes('/account') ||
         pathname.includes('/my-account') ||
         hash === '#account' ||
@@ -221,6 +297,8 @@ export const App: React.FC = () => {
           <MyAccountPage onNavigate={handleNavigate} initialTab={accountTab} />
         ) : currentView === 'admin' ? (
           <AdminPortal onNavigateToStorefront={handleNavigate} />
+        ) : currentView === 'login' || currentView === 'register' || currentView === 'forgot-password' ? (
+          <AuthPage initialMode={currentView} onNavigate={handleNavigate} />
         ) : (
           <ContactSection />
         )}
