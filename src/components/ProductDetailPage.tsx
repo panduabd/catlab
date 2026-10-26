@@ -239,7 +239,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onNavigate
     <div className="min-h-screen bg-[#fcfcfd] text-gray-900 antialiased selection:bg-yellow/30">
       {/* Toast Notification */}
       {addedToast && (
-        <div className="fixed top-24 right-6 z-[90] flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[90] flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shrink-0">
             <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path

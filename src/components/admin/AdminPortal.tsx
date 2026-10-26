@@ -8,6 +8,7 @@ import {
   LogOut,
   X,
   CheckCircle2,
+  AlertCircle,
   PanelLeftClose,
   PanelLeftOpen,
   Globe,
@@ -144,20 +145,34 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigateToStorefront
     <div className="min-h-screen bg-[#f8fafc] text-gray-900 antialiased font-sans flex flex-col lg:flex-row">
       {/* Toast Notification Bar */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-[999999] max-w-md rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 shrink-0">
-            <CheckCircle2 className="h-4 w-4" />
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[999999] max-w-md w-[92%] sm:w-auto min-w-[320px] rounded-2xl border border-gray-200/90 bg-white/95 backdrop-blur-md p-4 shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div
+            className={`flex h-8 w-8 items-center justify-center rounded-xl shrink-0 ${
+              toastMessage.toLowerCase().includes('error') || toastMessage.toLowerCase().includes('validation')
+                ? 'bg-rose-100 text-rose-700'
+                : 'bg-emerald-100 text-emerald-700'
+            }`}
+          >
+            {toastMessage.toLowerCase().includes('error') || toastMessage.toLowerCase().includes('validation') ? (
+              <AlertCircle className="h-4 w-4" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-gray-900">Success</p>
+          <div className="flex-1 min-w-0 pr-1">
+            <p className="text-xs font-bold text-gray-900">
+              {toastMessage.toLowerCase().includes('error') || toastMessage.toLowerCase().includes('validation')
+                ? 'Notice'
+                : 'Success'}
+            </p>
             <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{toastMessage}</p>
           </div>
           <button
             type="button"
             onClick={() => setToastMessage(null)}
-            className="text-gray-400 hover:text-gray-600 text-xs p-1 cursor-pointer"
+            className="text-gray-400 hover:text-gray-600 text-xs p-1 cursor-pointer shrink-0 transition-colors"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
       )}

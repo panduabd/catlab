@@ -1203,8 +1203,6 @@ export const AdminShippingManagement: React.FC<{ onShowToast: (msg: string) => v
 
     onShowToast(`Coverage area "${editingArea.name}" saved successfully.`);
     setInitialAreaSnapshot(JSON.stringify(editingArea));
-    setCurrentView('list');
-    setEditingArea(null);
   };
 
   const handleDeleteAreaConfirmed = () => {

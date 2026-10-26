@@ -35,7 +35,8 @@ import {
   List,
   ListOrdered,
   Quote,
-  Table as TableIcon
+  Table as TableIcon,
+  Globe
 } from 'lucide-react';
 import { AdminHelpIcon, AdminTooltip } from './AdminTooltip';
 
@@ -56,6 +57,7 @@ export const ALLOWED_MEDIA_TYPES = [
 export interface ProductVariant {
   id: string;
   name: string;
+  nameZh?: string;
   sku: string;
   price: number; // in TWD (Sale Price)
   originalPrice?: number; // Compare-at / Strikethrough price in TWD
@@ -65,20 +67,25 @@ export interface ProductVariant {
 
 export interface TableRowItem {
   key: string;
+  keyZh?: string;
   value: string;
+  valueZh?: string;
 }
 
 export interface AccordionContentBlock {
   id: string;
   type: 'rich_text' | 'table';
   title: string;
-  content?: string; // For rich_text
+  titleZh?: string;
+  content?: string; // For rich_text (English)
+  contentZh?: string; // For rich_text (Traditional Chinese)
   tableRows?: TableRowItem[]; // For table layout
 }
 
 export interface ContentAccordionItem {
   id: string;
   title: string;
+  titleZh?: string;
   sortOrder: number;
   blocks: AccordionContentBlock[];
   contentType?: 'rich_text' | 'table' | 'pdf_download';
@@ -91,13 +98,16 @@ export interface ProductMediaItem {
   url: string;
   type?: 'image' | 'video';
   isPrimary: boolean;
-  name: string; // Caption / Display Title
-  altText?: string; // SEO Alt text for image search indexing & accessibility
+  name: string; // Caption / Display Title (English)
+  nameZh?: string; // Caption / Display Title (Traditional Chinese)
+  altText?: string; // SEO Alt text (English)
+  altTextZh?: string; // SEO Alt text (Traditional Chinese)
 }
 
 export interface ProductItem {
   id: string;
   name: string;
+  nameZh?: string;
   sku: string;
   category: string;
   basePrice: number; // in TWD
@@ -112,12 +122,14 @@ export interface ProductItem {
   variants: ProductVariant[];
   accordions: ContentAccordionItem[];
   description?: string;
+  descriptionZh?: string;
 }
 
 const mockProductsList: ProductItem[] = [
   {
     id: 'prod-001',
     name: 'CAT LAB+ Hydrophobic Cat Litter Kit (Complete Home Wellness)',
+    nameZh: 'CAT LAB+ 貓咪專用疏水貓砂採樣檢測組 (居家日常健康監測套裝)',
     sku: 'CLP-KIT-01',
     category: 'Diagnostic Kits',
     basePrice: 890,
@@ -126,41 +138,53 @@ const mockProductsList: ProductItem[] = [
     status: 'Active',
     description:
       'Complete at-home feline wellness and diagnostic urine collection kit featuring non-absorbing hydrophobic sand and 10 clinical reagent testing parameters.',
+    descriptionZh:
+      '專為貓咪設計的無痛居家尿液採樣與檢測套組，採用 100% 疏水不吸水砂顆粒與 10 項臨床檢測試紙，輕鬆收集乾淨檢體。',
     images: [
       {
         url: '/images/product.webp',
         type: 'image',
         isPrimary: true,
         name: 'Main Kit Overview',
-        altText: 'CAT LAB+ feline diagnostic home urine collection kit complete box'
+        nameZh: '套組完整外盒與全配件總覽',
+        altText: 'CAT LAB+ feline diagnostic home urine collection kit complete box',
+        altTextZh: 'CAT LAB+ 貓咪專用疏水貓砂居家採樣檢測組完整外盒包裝'
       },
       {
         url: '/images/product-front.webp',
         type: 'image',
         isPrimary: false,
         name: 'Box Packaging Front',
-        altText: 'CAT LAB+ medical packaging front showing 10 diagnostic clinical parameters'
+        nameZh: '外包裝正面展示',
+        altText: 'CAT LAB+ medical packaging front showing 10 diagnostic clinical parameters',
+        altTextZh: 'CAT LAB+ 醫學級包裝正面標示 10 項臨床檢測參數'
       },
       {
         url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
         type: 'video',
         isPrimary: false,
         name: '3-Step Urine Collection Protocol (Video)',
-        altText: 'Demonstration video tutorial for feline urine collection using hydrophobic sand'
+        nameZh: '三步驟尿液採樣教學示範 (教學影片)',
+        altText: 'Demonstration video tutorial for feline urine collection using hydrophobic sand',
+        altTextZh: '使用專利疏水砂進行貓咪無痛採樣之教學示範影片'
       },
       {
         url: '/images/step-4.webp',
         type: 'image',
         isPrimary: false,
         name: 'Hydrophobic Collection Step',
-        altText: 'Hydrophobic non-absorbing sand feline urine collection method'
+        nameZh: '疏水砂自然集尿步驟',
+        altText: 'Hydrophobic non-absorbing sand feline urine collection method',
+        altTextZh: '專利疏水不吸水砂表面尿液凝結水珠採樣方式'
       },
       {
         url: '/images/step-6.webp',
         type: 'image',
         isPrimary: false,
         name: '10-Parameter Strip Foil',
-        altText: 'Foil sealed 10-parameter feline reagent urine test strip'
+        nameZh: '10 項試紙密封鋁箔包裝',
+        altText: 'Foil sealed 10-parameter feline reagent urine test strip',
+        altTextZh: '真空鋁箔封裝之 10 項貓咪尿液臨床診斷試紙'
       }
     ],
     weightGram: 420,
@@ -171,6 +195,7 @@ const mockProductsList: ProductItem[] = [
       {
         id: 'var-1',
         name: 'Complete Kit with 10-Parameter Strip',
+        nameZh: '完整檢測組 (含 10 項試紙)',
         sku: 'CLP-KIT-10P',
         price: 890,
         originalPrice: 1200,
@@ -180,6 +205,7 @@ const mockProductsList: ProductItem[] = [
       {
         id: 'var-2',
         name: 'Double Pack Value Bundle (2x Kits)',
+        nameZh: '雙盒超值分享組 (2 組套裝)',
         sku: 'CLP-KIT-2PK',
         price: 1680,
         originalPrice: 1980,
@@ -189,6 +215,7 @@ const mockProductsList: ProductItem[] = [
       {
         id: 'var-3',
         name: 'Refill Pack (Sand + 5 Strips)',
+        nameZh: '補充包 (疏水砂 + 5 份試紙)',
         sku: 'CLP-RFL-STD',
         price: 520,
         originalPrice: 650,
@@ -200,26 +227,31 @@ const mockProductsList: ProductItem[] = [
       {
         id: 'acc-1',
         title: 'PRODUCT DETAILS & SPECIFICATIONS',
+        titleZh: '商品詳情與臨床規格',
         sortOrder: 1,
         blocks: [
           {
             id: 'blk-1',
             type: 'rich_text',
             title: 'PACKAGE COMPOSITION',
+            titleZh: '內容物配置說明',
             content:
-              'Each diagnostic set includes 1x Hydrophobic Non-Absorbing Sand pouch (300g), 1x sterile urine collection pipette dropper, 1x airtight specimen vial, and 1x foil-sealed 10-parameter reagent testing strip.'
+              'Each diagnostic set includes 1x Hydrophobic Non-Absorbing Sand pouch (300g), 1x sterile urine collection pipette dropper, 1x airtight specimen vial, and 1x foil-sealed 10-parameter reagent testing strip.',
+            contentZh:
+              '每份檢測套組包含：專利疏水砂 1 包 (300g)、無菌採樣滴管 1 支、氣密封裝檢體保存管 1 支，以及真空鋁箔封裝之 10 項臨床檢測試紙 1 份。'
           },
           {
             id: 'blk-2',
             type: 'table',
             title: 'SPECIFICATIONS',
+            titleZh: '詳細規格清單',
             tableRows: [
-              { key: 'Product Name', value: 'CAT LAB+ Hydrophobic Cat Litter Kit' },
-              { key: 'Application', value: 'At-Home Feline Urine Collection & Health Monitoring' },
-              { key: 'Litter Material', value: '100% Non-Absorbent, Non-Toxic Granules' },
-              { key: 'Testing Method', value: '10-Parameter Urine Test Strip & Standard Diagnostic Color Chart' },
-              { key: 'Target Species', value: 'Felines (All Breeds)' },
-              { key: 'Sample Storage', value: 'Refrigerate if not delivered to clinic within 1 hr (max 12 hrs)' }
+              { key: 'Product Name', keyZh: '商品名稱', value: 'CAT LAB+ Hydrophobic Cat Litter Kit', valueZh: 'CAT LAB+ 疏水貓砂居家採樣檢測組' },
+              { key: 'Application', keyZh: '適用用途', value: 'At-Home Feline Urine Collection & Health Monitoring', valueZh: '居家貓咪尿液採集與基礎健康監測' },
+              { key: 'Litter Material', keyZh: '貓砂材質', value: '100% Non-Absorbent, Non-Toxic Granules', valueZh: '100% 專利疏水無毒顆粒' },
+              { key: 'Testing Method', keyZh: '檢測方式', value: '10-Parameter Urine Test Strip & Standard Diagnostic Color Chart', valueZh: '10 項尿液檢測試紙與標準比色卡' },
+              { key: 'Target Species', keyZh: '適用對象', value: 'Felines (All Breeds)', valueZh: '全年齡全品種貓咪' },
+              { key: 'Sample Storage', keyZh: '檢體保存', value: 'Refrigerate if not delivered to clinic within 1 hr (max 12 hrs)', valueZh: '如未即時送驗請冷藏保存 (最長不超過 12 小時)' }
             ]
           }
         ]
@@ -227,38 +259,47 @@ const mockProductsList: ProductItem[] = [
       {
         id: 'acc-2',
         title: 'HOW IT WORKS (3-STEP PROTOCOL)',
+        titleZh: '使用流程說明 (3 步驟採樣)',
         sortOrder: 2,
         blocks: [
           {
             id: 'blk-3',
             type: 'rich_text',
             title: 'STEP-BY-STEP CLINICAL GUIDE',
+            titleZh: '臨床採樣步驟指引',
             content:
-              '1. Empty the specialized hydrophobic sand into a thoroughly cleaned litter box.\n2. Allow your cat to urinate naturally; urine droplets bead cleanly on the surface without absorbing.\n3. Aspirate droplets using the sterile pipette dropper and dip the 10-parameter testing strip for 60 seconds.'
+              '1. Empty the specialized hydrophobic sand into a thoroughly cleaned litter box.\n2. Allow your cat to urinate naturally; urine droplets bead cleanly on the surface without absorbing.\n3. Aspirate droplets using the sterile pipette dropper and dip the 10-parameter testing strip for 60 seconds.',
+            contentZh:
+              '1. 將專用疏水砂倒入清潔乾燥的貓砂盆中。\n2. 貓咪排尿後，尿液顆粒將完好懸浮於砂表面不被吸收。\n3. 使用無菌滴管吸取尿液滴於試紙，靜待 60 秒對照比色卡。'
           }
         ]
       },
       {
         id: 'acc-3',
         title: '10 DIAGNOSTIC CLINICAL PARAMETERS',
+        titleZh: '10 項臨床診斷檢測參數',
         sortOrder: 3,
         blocks: [
           {
             id: 'blk-4',
             type: 'rich_text',
             title: 'REAGENTS & BIOMARKERS',
+            titleZh: '檢測試劑與生物標誌物',
             content:
-              'Parameters: Leukocytes, Nitrite, Urobilinogen, Protein, pH (5.0–8.5), Blood/Hemoglobin, Specific Gravity (1.000–1.030), Ketone, Bilirubin, Glucose. Matches feline veterinary triage standards.'
+              'Parameters: Leukocytes, Nitrite, Urobilinogen, Protein, pH (5.0–8.5), Blood/Hemoglobin, Specific Gravity (1.000–1.030), Ketone, Bilirubin, Glucose. Matches feline veterinary triage standards.',
+            contentZh:
+              '檢測項目涵蓋：白血球、亞硝酸鹽、尿膽素原、蛋白質、酸鹼值 (pH 5.0–8.5)、潛血/血紅素、尿比重 (1.000–1.030)、酮體、膽紅素、葡萄糖。完全符合獸醫臨床篩檢標準。'
           },
           {
             id: 'blk-5',
             type: 'table',
             title: 'PARAMETER REAGENTS TABLE',
+            titleZh: '檢測規格與保存標準',
             tableRows: [
-              { key: 'Storage Condition', value: 'Store at 2°C – 30°C (36°F – 86°F)' },
-              { key: 'Desiccant Included', value: 'Yes, Molecular Sieve Pack' },
-              { key: 'Reading Time', value: '60 Seconds Exact Color Comparison' },
-              { key: 'Veterinary Standard', value: 'TVMA Diagnostic Consensus Compliant' }
+              { key: 'Storage Condition', keyZh: '保存條件', value: 'Store at 2°C – 30°C (36°F – 86°F)', valueZh: '儲存於 2°C – 30°C 陰涼乾燥處' },
+              { key: 'Desiccant Included', keyZh: '內附乾燥劑', value: 'Yes, Molecular Sieve Pack', valueZh: '包含分子篩乾燥劑包' },
+              { key: 'Reading Time', keyZh: '判讀時間', value: '60 Seconds Exact Color Comparison', valueZh: '浸泡試紙 60 秒精準對照比色卡' },
+              { key: 'Veterinary Standard', keyZh: '臨床標準規範', value: 'TVMA Diagnostic Consensus Compliant', valueZh: '符合 TVMA 獸醫醫學診斷共識標準' }
             ]
           }
         ]
@@ -472,6 +513,9 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
   // Active Tab for Product Detail Editor: 'general' | 'media' | 'variants' | 'accordions' (UntitledUI Segmented Tabs)
   const [activeDetailTab, setActiveDetailTab] = useState<'general' | 'media' | 'variants' | 'accordions'>('general');
 
+  // Content Language Toggle: 'zh' (Traditional Chinese / 繁體中文 - Default Primary) | 'en' (English Translation)
+  const [contentLanguage, setContentLanguage] = useState<'en' | 'zh'>('zh');
+
   // Media Gallery Form & Upload State
   const [newMediaUrl, setNewMediaUrl] = useState('');
   const [newMediaCaption, setNewMediaCaption] = useState('');
@@ -485,12 +529,15 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
   // Three-dot Menu State for Media Items
   const [activeMenuIndex, setActiveMenuIndex] = useState<number | null>(null);
 
-  // Edit SEO Alt Text & Caption Modal State
+  // Edit SEO Alt Text & Caption Modal State (Bilingual)
   const [editingMediaItem, setEditingMediaItem] = useState<{
     index: number;
     name: string;
+    nameZh: string;
     altText: string;
+    altTextZh: string;
   } | null>(null);
+  const [mediaModalLang, setMediaModalLang] = useState<'en' | 'zh'>('zh');
 
   // Variant Image Picker Modal State
   const [pickingVariantImageId, setPickingVariantImageId] = useState<string | null>(null);
@@ -558,6 +605,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
     const q = searchQuery.toLowerCase();
     return (
       p.name.toLowerCase().includes(q) ||
+      (p.nameZh && p.nameZh.toLowerCase().includes(q)) ||
       p.sku.toLowerCase().includes(q) ||
       p.category.toLowerCase().includes(q)
     );
@@ -669,10 +717,10 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
     onShowToast(`Media order updated: "${temp.name || 'Item'}" moved right.`);
   };
 
-  // Update Media Details (Caption / Alt Text / Type)
+  // Update Media Details (Caption / Alt Text / Type - Bilingual)
   const handleUpdateMediaItem = (
     index: number,
-    field: 'name' | 'altText' | 'type' | 'url',
+    field: 'name' | 'nameZh' | 'altText' | 'altTextZh' | 'type' | 'url',
     value: string
   ) => {
     if (!currentEditingProduct) return;
@@ -723,15 +771,19 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
 
     const localUrl = URL.createObjectURL(file);
     const fileNameClean = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+    const isZh = contentLanguage === 'zh';
+
+    const defaultEnName = fileNameClean || (isVideo ? 'Product Demo Video' : `Product Photo ${currentEditingProduct.images.length + 1}`);
+    const defaultEnAlt = `${currentEditingProduct.name} - ${fileNameClean || (isVideo ? 'Video demonstration' : 'Product photo')}`;
 
     const newMedia: ProductMediaItem = {
       url: localUrl,
       type: isVideo ? 'video' : 'image',
       isPrimary: !isVideo && !currentEditingProduct.images.some((im) => im.isPrimary),
-      name: newMediaCaption.trim() || fileNameClean || (isVideo ? 'Product Demo Video' : 'Product Photo'),
-      altText:
-        newMediaAltText.trim() ||
-        `${currentEditingProduct.name} - ${fileNameClean || (isVideo ? 'Video demonstration' : 'Product photo')}`
+      name: isZh ? (newMediaCaption.trim() || defaultEnName) : (newMediaCaption.trim() || defaultEnName),
+      nameZh: isZh ? newMediaCaption.trim() : undefined,
+      altText: isZh ? (newMediaAltText.trim() || defaultEnAlt) : (newMediaAltText.trim() || defaultEnAlt),
+      altTextZh: isZh ? newMediaAltText.trim() : undefined
     };
 
     updateCurrentProduct({
@@ -766,20 +818,18 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
 
     const detectedType =
       targetUrl.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) ? 'video' : 'image';
-    const targetCaption =
-      newMediaCaption.trim() ||
-      (detectedType === 'video'
-        ? 'Product Demo Video'
-        : `Product Photo ${currentEditingProduct.images.length + 1}`);
-    const targetAltText =
-      newMediaAltText.trim() || `${currentEditingProduct.name} - ${targetCaption}`;
+    const isZh = contentLanguage === 'zh';
+    const defaultEnCaption = detectedType === 'video' ? 'Product Demo Video' : `Product Photo ${currentEditingProduct.images.length + 1}`;
+    const defaultEnAlt = `${currentEditingProduct.name} - ${defaultEnCaption}`;
 
     const newMedia: ProductMediaItem = {
       url: targetUrl,
       type: detectedType,
       isPrimary: detectedType !== 'video' && !currentEditingProduct.images.some((im) => im.isPrimary),
-      name: targetCaption,
-      altText: targetAltText
+      name: isZh ? (newMediaCaption.trim() || defaultEnCaption) : (newMediaCaption.trim() || defaultEnCaption),
+      nameZh: isZh ? newMediaCaption.trim() : undefined,
+      altText: isZh ? (newMediaAltText.trim() || defaultEnAlt) : (newMediaAltText.trim() || defaultEnAlt),
+      altTextZh: isZh ? newMediaAltText.trim() : undefined
     };
 
     updateCurrentProduct({
@@ -837,6 +887,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
     const newVar: ProductVariant = {
       id: 'var-' + Date.now(),
       name: 'Additional Option',
+      nameZh: '新增規格選項',
       sku: `${currentEditingProduct.sku}-V${currentEditingProduct.variants.length + 1}`,
       price: currentEditingProduct.basePrice,
       originalPrice: currentEditingProduct.originalPrice,
@@ -874,7 +925,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
 
   const handleUpdateVariantField = (
     varId: string,
-    field: 'name' | 'sku' | 'price' | 'originalPrice' | 'stock',
+    field: 'name' | 'nameZh' | 'sku' | 'price' | 'originalPrice' | 'stock',
     value: string | number | undefined
   ) => {
     if (!currentEditingProduct) return;
@@ -1085,7 +1136,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
   const handleUpdateBlockField = (
     accId: string,
     blockId: string,
-    field: 'title' | 'content' | 'type',
+    field: 'title' | 'titleZh' | 'content' | 'contentZh' | 'type',
     value: any
   ) => {
     if (!currentEditingProduct) return;
@@ -1098,8 +1149,18 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                 ...b,
                 type: 'table' as const,
                 tableRows: [
-                  { key: 'Product Name', value: currentEditingProduct.name },
-                  { key: 'Application', value: 'At-Home Feline Health Monitoring' }
+                  {
+                    key: 'Product Name',
+                    keyZh: '商品名稱',
+                    value: currentEditingProduct.name,
+                    valueZh: currentEditingProduct.nameZh || currentEditingProduct.name
+                  },
+                  {
+                    key: 'Application',
+                    keyZh: '適用用途',
+                    value: 'At-Home Feline Health Monitoring',
+                    valueZh: '居家貓咪健康監測與尿液採樣'
+                  }
                 ]
               };
             }
@@ -1152,7 +1213,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
     accId: string,
     blockId: string,
     rowIndex: number,
-    field: 'key' | 'value',
+    field: 'key' | 'keyZh' | 'value' | 'valueZh',
     val: string
   ) => {
     if (!currentEditingProduct) return;
@@ -1212,21 +1273,25 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
     formatType: 'bold' | 'italic' | 'underline' | 'bullet' | 'number' | 'quote'
   ) => {
     if (!currentEditingProduct) return;
+    const isZh = contentLanguage === 'zh';
     const updatedAccordions = currentEditingProduct.accordions.map((acc) => {
       if (acc.id === accId) {
         return {
           ...acc,
           blocks: (acc.blocks || []).map((b) => {
             if (b.id === blockId) {
-              const currentContent = b.content || '';
+              const currentContent = (isZh ? b.contentZh : b.content) || '';
               let addition = '';
-              if (formatType === 'bold') addition = ' **Bold highlight** ';
-              if (formatType === 'italic') addition = ' *Italic text* ';
-              if (formatType === 'underline') addition = ' <u>Underlined text</u> ';
-              if (formatType === 'bullet') addition = '\n• Feature point';
-              if (formatType === 'number') addition = '\n1. First step';
-              if (formatType === 'quote') addition = '\n> Clinical note: ';
-              return { ...b, content: currentContent + addition };
+              if (formatType === 'bold') addition = isZh ? ' **重點粗體文字** ' : ' **Bold highlight** ';
+              if (formatType === 'italic') addition = isZh ? ' *斜體文字* ' : ' *Italic text* ';
+              if (formatType === 'underline') addition = isZh ? ' <u>底線文字</u> ' : ' <u>Underlined text</u> ';
+              if (formatType === 'bullet') addition = isZh ? '\n• 重點說明項目' : '\n• Feature point';
+              if (formatType === 'number') addition = isZh ? '\n1. 第一步驟' : '\n1. First step';
+              if (formatType === 'quote') addition = isZh ? '\n> 臨床備註說明：' : '\n> Clinical note: ';
+              return {
+                ...b,
+                [isZh ? 'contentZh' : 'content']: currentContent + addition
+              };
             }
             return b;
           })
@@ -1444,6 +1509,11 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                               >
                                 {prod.name}
                               </button>
+                              {prod.nameZh && (
+                                <p className="text-[11px] font-medium text-gray-500 line-clamp-1">
+                                  {prod.nameZh}
+                                </p>
+                              )}
                               <p className="text-[11px] text-gray-400 mt-0.5">
                                 {prod.variants.length} Variants • {prod.accordions.length} Content Accordions
                               </p>
@@ -1636,7 +1706,6 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                 }
                 onShowToast(`All changes for ${currentEditingProduct.sku} saved successfully.`);
                 setInitialProductSnapshot(JSON.stringify(currentEditingProduct));
-                setEditingProductId(null);
               }}
               className={`inline-flex items-center gap-2 rounded-xl px-5 py-2 text-xs font-bold transition-all ${
                 isProductDirty
@@ -1653,7 +1722,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
 
       {/* Sticky Full-Bleed Tabs Navigation Bar */}
       <div className="sticky top-16 z-20 bg-white/95 backdrop-blur-md border-b border-gray-200/80 shadow-2xs w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 py-2.5 flex items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="inline-flex flex-wrap items-center p-1 rounded-2xl bg-gray-100/90 border border-gray-200 shadow-2xs gap-1">
             <button
               type="button"
@@ -1707,6 +1776,61 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
               <span>Content Accordions</span>
             </button>
           </div>
+
+          {/* Storefront Content Language Switcher (Customer-Facing Translation) */}
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+            <div className="hidden sm:flex items-center gap-1.5 text-gray-500">
+              <Globe className="h-3.5 w-3.5 text-charcoal/70" />
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-700">
+                Content:
+              </span>
+              <AdminHelpIcon text="Switch which language version of this product content you are editing (for customer PDP view). This does NOT change the Admin Panel interface language (which is managed separately in the left sidebar)." />
+            </div>
+
+            <div className="inline-flex items-center p-1 rounded-2xl bg-gray-100/90 border border-gray-200 shadow-2xs gap-1">
+              <button
+                type="button"
+                onClick={() => setContentLanguage('zh')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  contentLanguage === 'zh'
+                    ? 'bg-white text-gray-900 shadow-xs border border-gray-200/80 ring-1 ring-black/5'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-white/50 border border-transparent'
+                }`}
+                title="Edit customer-facing product content in Traditional Chinese (Default Storefront Locale)"
+              >
+                <span>🇹🇼</span>
+                <span>繁體中文</span>
+                <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md ${
+                  contentLanguage === 'zh'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-gray-200/80 text-gray-500'
+                }`}>
+                  Default
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setContentLanguage('en')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  contentLanguage === 'en'
+                    ? 'bg-white text-gray-900 shadow-xs border border-gray-200/80 ring-1 ring-black/5'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-white/50 border border-transparent'
+                }`}
+                title="Edit customer-facing product content in English (Storefront Translation)"
+              >
+                <span>🇺🇸</span>
+                <span>English</span>
+                <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md ${
+                  contentLanguage === 'en'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-gray-200/80 text-gray-400'
+                }`}>
+                  EN
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1741,24 +1865,43 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                           </label>
                           <span
                             className={`text-[11px] font-mono font-medium ${
-                              currentEditingProduct.name.length >= MAX_PRODUCT_TITLE_LENGTH
+                              (contentLanguage === 'en' ? currentEditingProduct.name.length : (currentEditingProduct.nameZh || '').length) >= MAX_PRODUCT_TITLE_LENGTH
                                 ? 'text-rose-600 font-bold'
                                 : 'text-gray-400'
                             }`}
                           >
-                            {currentEditingProduct.name.length} / {MAX_PRODUCT_TITLE_LENGTH} characters
+                            {contentLanguage === 'en' ? currentEditingProduct.name.length : (currentEditingProduct.nameZh || '').length} / {MAX_PRODUCT_TITLE_LENGTH} characters
                           </span>
                         </div>
                         <input
                           type="text"
                           maxLength={MAX_PRODUCT_TITLE_LENGTH}
-                          value={currentEditingProduct.name}
+                          value={contentLanguage === 'en' ? currentEditingProduct.name : (currentEditingProduct.nameZh || '')}
                           onChange={(e) =>
-                            updateCurrentProduct({ ...currentEditingProduct, name: e.target.value })
+                            updateCurrentProduct({
+                              ...currentEditingProduct,
+                              ...(contentLanguage === 'en' ? { name: e.target.value } : { nameZh: e.target.value })
+                            })
                           }
-                          placeholder="e.g. CAT LAB+ Hydrophobic Cat Litter Kit"
+                          placeholder={
+                            contentLanguage === 'en'
+                              ? `e.g. CAT LAB+ Hydrophobic Cat Litter Kit (ZH: ${currentEditingProduct.nameZh || '...'})`
+                              : '例如: CAT LAB+ 貓咪專用疏水貓砂採樣檢測組'
+                          }
                           className="w-full h-11 rounded-xl border border-gray-300 bg-white px-3.5 text-xs sm:text-sm font-bold text-gray-900 focus:border-charcoal focus:ring-2 focus:ring-yellow/30 outline-none transition-all"
                         />
+                        {contentLanguage === 'en' && currentEditingProduct.nameZh && (
+                          <p className="mt-1.5 text-[11px] text-gray-500 flex items-center gap-1.5">
+                            <span className="font-bold text-gray-400 uppercase tracking-wide text-[10px]">繁中正體原文 (Default):</span>
+                            <span className="italic text-gray-800 font-semibold">"{currentEditingProduct.nameZh}"</span>
+                          </p>
+                        )}
+                        {contentLanguage === 'zh' && currentEditingProduct.name && (
+                          <p className="mt-1.5 text-[11px] text-gray-500 flex items-center gap-1.5">
+                            <span className="font-bold text-gray-400 uppercase tracking-wide text-[10px]">EN Translation:</span>
+                            <span className="italic text-gray-600 font-medium">"{currentEditingProduct.name}"</span>
+                          </p>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1876,21 +2019,47 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
-                          Short Description / Summary
-                        </label>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide">
+                            Short Description / Summary
+                          </label>
+                        </div>
                         <textarea
                           rows={3}
-                          value={currentEditingProduct.description || ''}
+                          value={contentLanguage === 'en' ? (currentEditingProduct.description || '') : (currentEditingProduct.descriptionZh || '')}
                           onChange={(e) =>
                             updateCurrentProduct({
                               ...currentEditingProduct,
-                              description: e.target.value
+                              ...(contentLanguage === 'en' ? { description: e.target.value } : { descriptionZh: e.target.value })
                             })
                           }
-                          placeholder="Provide a concise clinical summary of the product for storefront listing cards and search previews..."
+                          placeholder={
+                            contentLanguage === 'en'
+                              ? 'Provide a concise clinical summary of the product for storefront listing cards and search previews...'
+                              : '請輸入繁體中文產品簡述，用於商店卡片與搜尋預覽...'
+                          }
                           className="w-full rounded-xl border border-gray-300 bg-white p-3 text-xs sm:text-sm text-gray-800 leading-relaxed focus:border-charcoal focus:ring-2 focus:ring-yellow/30 outline-none transition-all"
                         />
+                        {contentLanguage === 'en' && currentEditingProduct.descriptionZh && (
+                          <div className="mt-2 p-2.5 rounded-xl bg-gray-50 border border-gray-200/80 text-[11px] text-gray-600 space-y-1">
+                            <span className="font-bold text-gray-500 text-[10px] uppercase tracking-wider block">
+                              繁中正體原文 (Storefront Default):
+                            </span>
+                            <p className="italic text-gray-700 leading-relaxed line-clamp-3">
+                              {currentEditingProduct.descriptionZh}
+                            </p>
+                          </div>
+                        )}
+                        {contentLanguage === 'zh' && currentEditingProduct.description && (
+                          <div className="mt-2 p-2.5 rounded-xl bg-gray-50 border border-gray-200/80 text-[11px] text-gray-600 space-y-1">
+                            <span className="font-bold text-gray-500 text-[10px] uppercase tracking-wider block">
+                              English Reference Translation:
+                            </span>
+                            <p className="italic text-gray-700 leading-relaxed line-clamp-3">
+                              {currentEditingProduct.description}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -2051,13 +2220,16 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                                           setEditingMediaItem({
                                             index: idx,
                                             name: media.name,
-                                            altText: media.altText || ''
+                                            nameZh: media.nameZh || '',
+                                            altText: media.altText || '',
+                                            altTextZh: media.altTextZh || ''
                                           });
+                                          setMediaModalLang(contentLanguage);
                                         }}
                                         className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-gray-700 hover:bg-gray-100 font-semibold cursor-pointer"
                                       >
                                         <Edit3 className="h-3.5 w-3.5 text-gray-500" />
-                                        <span>Edit SEO Alt</span>
+                                        <span>Edit Caption &amp; Alt Text</span>
                                       </button>
                                       <div className="border-t border-gray-100 my-1" />
                                       <button
@@ -2076,6 +2248,26 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                                   </>
                                 )}
                               </div>
+                            </div>
+
+                            {/* Media Caption & Alt Text Display */}
+                            <div className="mt-2 px-1">
+                              <p className="text-xs font-bold text-gray-800 truncate" title={contentLanguage === 'zh' ? (media.nameZh || media.name) : media.name}>
+                                {contentLanguage === 'zh' ? (
+                                  media.nameZh ? (
+                                    media.nameZh
+                                  ) : (
+                                    <span className="text-gray-400 font-normal italic">{media.name} (EN)</span>
+                                  )
+                                ) : (
+                                  media.name
+                                )}
+                              </p>
+                              {(media.altText || media.altTextZh) && (
+                                <p className="text-[10px] text-gray-400 truncate mt-0.5" title={contentLanguage === 'zh' ? (media.altTextZh || media.altText) : media.altText}>
+                                  <span className="font-semibold text-gray-400">Alt:</span> {contentLanguage === 'zh' ? (media.altTextZh || media.altText) : media.altText}
+                                </p>
+                              )}
                             </div>
 
                             {/* Compact Card Footer: Reorder Arrows (Left & Right) & Index */}
@@ -2202,9 +2394,14 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                       ) : (
                         <div className="rounded-xl border border-gray-200 bg-white p-3.5 space-y-3 animate-in fade-in-50 duration-150">
                           <div className="flex items-center justify-between pb-1.5 border-b border-gray-100">
-                            <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
-                              Caption & SEO Alt Settings
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                                Caption &amp; SEO Alt Settings
+                              </span>
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">
+                                {contentLanguage === 'en' ? '🇺🇸 English' : '🇹🇼 繁體中文'}
+                              </span>
+                            </div>
                             <button
                               type="button"
                               onClick={() => setShowSeoAltInput(false)}
@@ -2216,25 +2413,33 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                                Media Caption / Title
+                                Media Caption / Title ({contentLanguage === 'en' ? 'EN' : '繁中'})
                               </label>
                               <input
                                 type="text"
                                 value={newMediaCaption}
                                 onChange={(e) => setNewMediaCaption(e.target.value)}
-                                placeholder="e.g. CAT LAB+ Hydrophobic Sand Kit"
+                                placeholder={
+                                  contentLanguage === 'en'
+                                    ? 'e.g. CAT LAB+ Hydrophobic Sand Kit'
+                                    : '例如: CAT LAB+ 專利疏水砂示範套裝'
+                                }
                                 className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2.5 text-xs text-gray-800 focus:border-charcoal outline-none"
                               />
                             </div>
                             <div>
                               <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                                SEO Alt Text (Google & Accessibility)
+                                SEO Alt Text ({contentLanguage === 'en' ? 'EN' : '繁中'})
                               </label>
                               <input
                                 type="text"
                                 value={newMediaAltText}
                                 onChange={(e) => setNewMediaAltText(e.target.value)}
-                                placeholder="e.g. Non-absorbent veterinary urine collection sand"
+                                placeholder={
+                                  contentLanguage === 'en'
+                                    ? 'e.g. Non-absorbent veterinary urine collection sand'
+                                    : '例如: 獸醫臨床專利疏水不吸水集尿砂'
+                                }
                                 className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2.5 text-xs text-gray-800 focus:border-charcoal outline-none"
                               />
                             </div>
@@ -2320,7 +2525,9 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                                   #{acc.sortOrder}
                                 </span>
                                 <span className="text-xs sm:text-sm font-bold text-gray-900 uppercase tracking-wide truncate max-w-xs sm:max-w-md">
-                                  {acc.title || 'Untitled Tab'}
+                                  {contentLanguage === 'en'
+                                    ? (acc.title || 'Untitled Tab')
+                                    : (acc.titleZh || acc.title || '未命名標籤 (Untitled)')}
                                 </span>
                                 <span className="rounded-md bg-gray-200/70 text-gray-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider shrink-0">
                                   {blocks.length} {blocks.length === 1 ? 'Section' : 'Sections'}
@@ -2377,26 +2584,44 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                             {/* Collapsible Content Body */}
                             {isOpen && (
                               <div className="px-3.5 sm:px-4 pb-4 pt-1 border-t border-gray-200/80 space-y-4">
-                                {/* Accordion Tab Title Setting */}
+                                {/* Accordion Tab Title Setting (Bilingual) */}
                                 <div>
-                                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                                    Accordion Tab Title
-                                  </label>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-[11px] font-bold text-gray-600 uppercase">
+                                      Accordion Tab Title
+                                    </label>
+                                  </div>
                                   <input
                                     type="text"
-                                    value={acc.title}
+                                    value={contentLanguage === 'en' ? acc.title : (acc.titleZh ?? '')}
                                     onChange={(e) => {
                                       const val = e.target.value;
                                       updateCurrentProduct({
                                         ...currentEditingProduct,
                                         accordions: currentEditingProduct.accordions.map((a) =>
-                                          a.id === acc.id ? { ...a, title: val } : a
+                                          a.id === acc.id
+                                            ? { ...a, [contentLanguage === 'zh' ? 'titleZh' : 'title']: val }
+                                            : a
                                         )
                                       });
                                     }}
-                                    placeholder="e.g. PRODUCT DETAILS & SPECIFICATIONS"
+                                    placeholder={
+                                      contentLanguage === 'en'
+                                        ? `e.g. PRODUCT DETAILS & SPECIFICATIONS (ZH: ${acc.titleZh || '...'})`
+                                        : '例如: 商品詳情與規格說明'
+                                    }
                                     className="w-full h-9 rounded-lg border border-gray-300 bg-white px-3 font-bold text-xs sm:text-sm text-gray-900 focus:border-charcoal focus:ring-1 focus:ring-charcoal outline-none uppercase"
                                   />
+                                  {contentLanguage === 'en' && acc.titleZh && (
+                                    <p className="mt-1 text-[10px] text-gray-500">
+                                      <span className="font-semibold text-gray-400">繁中正體原文 (Default):</span> "{acc.titleZh}"
+                                    </p>
+                                  )}
+                                  {contentLanguage === 'zh' && acc.title && (
+                                    <p className="mt-1 text-[10px] text-gray-500">
+                                      <span className="font-semibold text-gray-400">EN Translation:</span> "{acc.title}"
+                                    </p>
+                                  )}
                                 </div>
 
                                 {/* Content Layout Blocks List */}
@@ -2446,25 +2671,30 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                                           {/* Block Header */}
                                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-gray-100">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                              {/* Block Title Input (Left) */}
-                                              <input
-                                                type="text"
-                                                value={block.title}
-                                                onChange={(e) =>
-                                                  handleUpdateBlockField(
-                                                    acc.id,
-                                                    block.id,
-                                                    'title',
-                                                    e.target.value
-                                                  )
-                                                }
-                                                placeholder={
-                                                  block.type === 'table'
-                                                    ? 'SPECIFICATIONS'
-                                                    : 'SECTION TITLE'
-                                                }
-                                                className="h-8 rounded-lg border border-gray-300 bg-white px-2.5 text-xs font-bold uppercase text-gray-900 focus:border-charcoal outline-none w-52 sm:w-64"
-                                              />
+                                              {/* Block Title Input (Bilingual) */}
+                                              <div className="flex items-center gap-1.5">
+                                                <input
+                                                  type="text"
+                                                  value={contentLanguage === 'en' ? block.title : (block.titleZh ?? '')}
+                                                  onChange={(e) =>
+                                                    handleUpdateBlockField(
+                                                      acc.id,
+                                                      block.id,
+                                                      contentLanguage === 'zh' ? 'titleZh' : 'title',
+                                                      e.target.value
+                                                    )
+                                                  }
+                                                  placeholder={
+                                                    contentLanguage === 'en'
+                                                      ? (block.type === 'table' ? 'SPECIFICATIONS' : 'SECTION TITLE')
+                                                      : (block.type === 'table' ? `規格說明 (EN: ${block.title})` : `章節標題 (EN: ${block.title})`)
+                                                  }
+                                                  className="h-8 rounded-lg border border-gray-300 bg-white px-2.5 text-xs font-bold uppercase text-gray-900 focus:border-charcoal outline-none w-52 sm:w-64"
+                                                />
+                                                <span className="text-[10px] font-bold text-gray-500 px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200">
+                                                  {contentLanguage === 'en' ? 'EN' : '繁中'}
+                                                </span>
+                                              </div>
 
                                               {/* Type Pill Badge (Right of Title Input) */}
                                               {block.type === 'rich_text' ? (
@@ -2592,18 +2822,42 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
 
                                               <textarea
                                                 rows={3}
-                                                value={block.content || ''}
+                                                value={contentLanguage === 'en' ? (block.content || '') : (block.contentZh ?? '')}
                                                 onChange={(e) =>
                                                   handleUpdateBlockField(
                                                     acc.id,
                                                     block.id,
-                                                    'content',
+                                                    contentLanguage === 'zh' ? 'contentZh' : 'content',
                                                     e.target.value
                                                   )
                                                 }
-                                                placeholder="Enter clinical paragraph content, bullet points, or step-by-step instructions..."
+                                                placeholder={
+                                                  contentLanguage === 'en'
+                                                    ? 'Enter clinical paragraph content, bullet points, or step-by-step instructions...'
+                                                    : '請輸入繁體中文內文、臨床段落或使用指引...'
+                                                }
                                                 className="w-full rounded-xl border border-gray-300 bg-white p-3 text-xs sm:text-sm text-gray-800 leading-relaxed focus:border-charcoal focus:ring-1 focus:ring-charcoal outline-none transition-all font-sans"
                                               />
+                                              {contentLanguage === 'en' && block.contentZh && (
+                                                <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200/80 text-[11px] text-gray-600 space-y-1">
+                                                  <span className="font-bold text-gray-500 text-[10px] uppercase tracking-wider block">
+                                                    繁中正體原文 (Storefront Default):
+                                                  </span>
+                                                  <p className="italic text-gray-700 leading-relaxed whitespace-pre-line line-clamp-4">
+                                                    {block.contentZh}
+                                                  </p>
+                                                </div>
+                                              )}
+                                              {contentLanguage === 'zh' && block.content && (
+                                                <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200/80 text-[11px] text-gray-600 space-y-1">
+                                                  <span className="font-bold text-gray-500 text-[10px] uppercase tracking-wider block">
+                                                    English Reference Translation:
+                                                  </span>
+                                                  <p className="italic text-gray-700 leading-relaxed whitespace-pre-line line-clamp-4">
+                                                    {block.content}
+                                                  </p>
+                                                </div>
+                                              )}
                                             </div>
                                           ) : (
                                             /* TABLE LAYOUT EDITOR */
@@ -2624,8 +2878,8 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                                               {/* Table Row Inputs */}
                                               <div className="space-y-2 rounded-xl bg-gray-50/70 p-3 border border-gray-200">
                                                 <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider px-1">
-                                                  <span className="col-span-5">Column 1</span>
-                                                  <span className="col-span-6">Column 2</span>
+                                                  <span className="col-span-5">Column 1 ({contentLanguage === 'zh' ? '欄位名稱 [繁中預設]' : 'Key [EN]'})</span>
+                                                  <span className="col-span-6">Column 2 ({contentLanguage === 'zh' ? '規格內容 [繁中預設]' : 'Value [EN]'})</span>
                                                   <span className="col-span-1 text-right">Del</span>
                                                 </div>
 
@@ -2634,34 +2888,42 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                                                     <div className="col-span-5">
                                                       <input
                                                         type="text"
-                                                        value={row.key}
+                                                        value={contentLanguage === 'en' ? row.key : (row.keyZh ?? '')}
                                                         onChange={(e) =>
                                                           handleUpdateTableRow(
                                                             acc.id,
                                                             block.id,
                                                             rIdx,
-                                                            'key',
+                                                            contentLanguage === 'zh' ? 'keyZh' : 'key',
                                                             e.target.value
                                                           )
                                                         }
-                                                        placeholder="Column 1 label"
+                                                        placeholder={
+                                                          contentLanguage === 'en'
+                                                            ? 'Column 1 label'
+                                                            : `欄位名稱 (EN: ${row.key || 'Label'})`
+                                                        }
                                                         className="w-full h-8 rounded-lg border border-gray-300 bg-white px-2.5 text-xs text-gray-700 focus:border-charcoal outline-none font-medium"
                                                       />
                                                     </div>
                                                     <div className="col-span-6">
                                                       <input
                                                         type="text"
-                                                        value={row.value}
+                                                        value={contentLanguage === 'en' ? row.value : (row.valueZh ?? '')}
                                                         onChange={(e) =>
                                                           handleUpdateTableRow(
                                                             acc.id,
                                                             block.id,
                                                             rIdx,
-                                                            'value',
+                                                            contentLanguage === 'zh' ? 'valueZh' : 'value',
                                                             e.target.value
                                                           )
                                                         }
-                                                        placeholder="Column 2 value"
+                                                        placeholder={
+                                                          contentLanguage === 'en'
+                                                            ? 'Column 2 value'
+                                                            : `內容數值 (EN: ${row.value || 'Value'})`
+                                                        }
                                                         className="w-full h-8 rounded-lg border border-gray-300 bg-white px-2.5 text-xs text-gray-900 font-bold focus:border-charcoal outline-none"
                                                       />
                                                     </div>
@@ -2772,7 +3034,9 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                       <thead>
                         <tr className="border-b border-gray-200 bg-gray-50/70 text-gray-600 font-semibold text-xs uppercase tracking-wide">
                           <th className="py-3 px-3.5 text-center w-16">Image</th>
-                          <th className="py-3 px-3.5 min-w-[220px] sm:min-w-[260px]">Variant Option Name</th>
+                          <th className="py-3 px-3.5 min-w-[220px] sm:min-w-[260px]">
+                            Variant Option Name
+                          </th>
                           <th className="py-3 px-3 min-w-[130px]">Variant SKU</th>
                           <th className="py-3 px-3 min-w-[140px]">Original Price (NT$)</th>
                           <th className="py-3 px-3 min-w-[130px]">Sale Price (NT$)</th>
@@ -2830,21 +3094,33 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                                   )}
                                 </td>
 
-                                {/* Variant Option Name */}
+                                {/* Variant Option Name (Bilingual) */}
                                 <td className="py-3 px-3.5 min-w-[220px] sm:min-w-[260px]">
                                   <div className="space-y-1">
                                     <div className="flex items-center gap-1.5">
                                       <input
                                         type="text"
                                         disabled={isDefault}
-                                        value={v.name}
+                                        value={
+                                          isDefault
+                                            ? (contentLanguage === 'zh'
+                                                ? (currentEditingProduct.nameZh ? `${currentEditingProduct.nameZh} [主商品]` : '主商品預設規格 (Master)')
+                                                : (v.name || 'Master Product'))
+                                            : (contentLanguage === 'zh' ? (v.nameZh ?? '') : v.name)
+                                        }
                                         onChange={(e) =>
-                                          handleUpdateVariantField(v.id, 'name', e.target.value)
+                                          handleUpdateVariantField(
+                                            v.id,
+                                            contentLanguage === 'zh' ? 'nameZh' : 'name',
+                                            e.target.value
+                                          )
                                         }
                                         placeholder={
                                           isDefault
-                                            ? 'Master Product'
-                                            : 'e.g. Double Pack (20 Strips)'
+                                            ? (contentLanguage === 'zh' ? '主商品預設規格 (Master)' : 'Master Product')
+                                            : (contentLanguage === 'zh'
+                                                ? `例如: 雙盒超值組 (EN: ${v.name || 'Option'})`
+                                                : 'e.g. Double Pack (20 Strips)')
                                         }
                                         className={`w-full min-w-[160px] rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
                                           isDefault
@@ -2862,11 +3138,19 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                                         </span>
                                       )}
                                     </div>
-                                    {isDefault && (
+                                    {isDefault ? (
                                       <p className="text-[10px] text-gray-400">
                                         Core product option. Managed via General Info &amp; Pricing sidebar.
                                       </p>
-                                    )}
+                                    ) : contentLanguage === 'en' && v.nameZh ? (
+                                      <p className="text-[10px] text-gray-400 font-medium">
+                                        繁中 (Default): {v.nameZh}
+                                      </p>
+                                    ) : contentLanguage === 'zh' && v.name ? (
+                                      <p className="text-[10px] text-gray-400 font-medium">
+                                        EN: {v.name}
+                                      </p>
+                                    ) : null}
                                   </div>
                                 </td>
 
@@ -3361,7 +3645,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                           <ImageIcon className="h-4 w-4 text-yellow shrink-0" />
                         )}
                         <span className="text-sm font-bold truncate max-w-md">
-                          {previewMedia.name || 'Media Preview'}
+                          {(contentLanguage === 'zh' ? (previewMedia.nameZh || previewMedia.name) : previewMedia.name) || 'Media Preview'}
                         </span>
                         {previewMedia.isPrimary && (
                           <span className="bg-yellow text-charcoal text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase shrink-0">
@@ -3401,7 +3685,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                       <div className="min-w-0">
                         <span className="font-bold text-white">SEO Alt Text: </span>
                         <span className="text-gray-300">
-                          {previewMedia.altText || <span className="italic text-gray-500">None configured</span>}
+                          {(contentLanguage === 'zh' ? (previewMedia.altTextZh || previewMedia.altText) : previewMedia.altText) || <span className="italic text-gray-500">None configured</span>}
                         </span>
                       </div>
                       <span className="text-[11px] text-gray-400 font-mono shrink-0">
@@ -3412,7 +3696,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                 </div>
               )}
 
-              {/* MODAL 2: Edit SEO Alt Text & Caption Modal */}
+              {/* MODAL 2: Edit SEO Alt Text & Caption Modal (Bilingual) */}
               {editingMediaItem && (
                 <div
                   className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
@@ -3425,7 +3709,7 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                     <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                       <div className="flex items-center gap-2">
                         <Edit3 className="h-4 w-4 text-charcoal" />
-                        <h3 className="text-base font-bold text-gray-900">Edit SEO Alt Text</h3>
+                        <h3 className="text-base font-bold text-gray-900">Edit Caption &amp; SEO Alt Text</h3>
                       </div>
                       <button
                         type="button"
@@ -3436,38 +3720,116 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                       </button>
                     </div>
 
+                    {/* Inline Language Selector inside Modal */}
+                    <div className="flex items-center justify-between bg-gray-50 p-2 rounded-2xl border border-gray-200">
+                      <div className="flex items-center gap-1.5 pl-1.5">
+                        <Globe className="h-3.5 w-3.5 text-charcoal/70" />
+                        <span className="text-xs font-bold text-gray-700">Storefront Language:</span>
+                      </div>
+                      <div className="inline-flex items-center p-0.5 rounded-xl bg-gray-200/80 gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setMediaModalLang('zh')}
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            mediaModalLang === 'zh'
+                              ? 'bg-white text-gray-900 shadow-xs'
+                              : 'text-gray-500 hover:text-gray-900'
+                          }`}
+                        >
+                          <span>🇹🇼 繁體中文</span>
+                          <span className={`text-[9px] px-1 py-0.5 rounded font-extrabold ${
+                            mediaModalLang === 'zh' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-300 text-gray-600'
+                          }`}>
+                            Default
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMediaModalLang('en')}
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            mediaModalLang === 'en'
+                              ? 'bg-white text-gray-900 shadow-xs'
+                              : 'text-gray-500 hover:text-gray-900'
+                          }`}
+                        >
+                          <span>🇺🇸 English</span>
+                          <span className={`text-[9px] px-1 py-0.5 rounded font-extrabold ${
+                            mediaModalLang === 'en' ? 'bg-blue-100 text-blue-800' : 'bg-gray-300 text-gray-600'
+                          }`}>
+                            EN
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="space-y-3.5">
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                          Media Caption / Name
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-bold text-gray-700 uppercase">
+                            Media Caption / Name ({mediaModalLang === 'zh' ? '繁體中文 - 預設' : 'English Translation'})
+                          </label>
+                        </div>
                         <input
                           type="text"
-                          value={editingMediaItem.name}
+                          value={mediaModalLang === 'en' ? editingMediaItem.name : editingMediaItem.nameZh}
                           onChange={(e) =>
-                            setEditingMediaItem({ ...editingMediaItem, name: e.target.value })
+                            setEditingMediaItem({
+                              ...editingMediaItem,
+                              [mediaModalLang === 'en' ? 'name' : 'nameZh']: e.target.value
+                            })
                           }
-                          placeholder="e.g. CAT LAB+ Hydrophobic Sand Demonstration Kit"
+                          placeholder={
+                            mediaModalLang === 'zh'
+                              ? '例如: CAT LAB+ 專利疏水砂示範套裝 (預設繁中)'
+                              : 'e.g. CAT LAB+ Hydrophobic Sand Demonstration Kit (English translation)'
+                          }
                           className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 text-xs sm:text-sm font-semibold text-gray-900 focus:border-charcoal focus:ring-1 focus:ring-charcoal outline-none"
                         />
+                        {mediaModalLang === 'zh' && editingMediaItem.name && (
+                          <p className="mt-1 text-[11px] text-gray-500">
+                            <span className="font-semibold text-blue-600">EN Translation:</span> "{editingMediaItem.name}"
+                          </p>
+                        )}
+                        {mediaModalLang === 'en' && editingMediaItem.nameZh && (
+                          <p className="mt-1 text-[11px] text-gray-500">
+                            <span className="font-semibold text-emerald-600">繁中正體原文 (Default):</span> "{editingMediaItem.nameZh}"
+                          </p>
+                        )}
                       </div>
 
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <label className="text-xs font-bold text-gray-700 uppercase">
-                            SEO Alt Text
+                            SEO Alt Text ({mediaModalLang === 'zh' ? '繁體中文 - 預設' : 'English Translation'})
                           </label>
-                          <span className="text-[10px] text-gray-500">Google Images & Screen Readers</span>
+                          <span className="text-[10px] text-gray-500">Google Images &amp; Screen Readers</span>
                         </div>
                         <textarea
                           rows={3}
-                          value={editingMediaItem.altText}
+                          value={mediaModalLang === 'en' ? editingMediaItem.altText : editingMediaItem.altTextZh}
                           onChange={(e) =>
-                            setEditingMediaItem({ ...editingMediaItem, altText: e.target.value })
+                            setEditingMediaItem({
+                              ...editingMediaItem,
+                              [mediaModalLang === 'en' ? 'altText' : 'altTextZh']: e.target.value
+                            })
                           }
-                          placeholder="Accurately describe the media for search engines and accessibility (e.g. Non-absorbent veterinary urine collection sand in sterile tray)..."
+                          placeholder={
+                            mediaModalLang === 'zh'
+                              ? '準確描述圖片內容，有助於 Google 圖片搜尋引擎索引與視障螢幕報讀...'
+                              : 'Accurately describe the media for search engines and accessibility (e.g. Non-absorbent veterinary urine collection sand in sterile tray)...'
+                          }
                           className="w-full rounded-xl border border-gray-300 bg-white p-3 text-xs text-gray-800 leading-relaxed focus:border-charcoal focus:ring-1 focus:ring-charcoal outline-none"
                         />
+                        {mediaModalLang === 'zh' && editingMediaItem.altText && (
+                          <p className="mt-1 text-[11px] text-gray-500">
+                            <span className="font-semibold text-blue-600">EN Translation:</span> "{editingMediaItem.altText}"
+                          </p>
+                        )}
+                        {mediaModalLang === 'en' && editingMediaItem.altTextZh && (
+                          <p className="mt-1 text-[11px] text-gray-500">
+                            <span className="font-semibold text-emerald-600">繁中正體原文 (Default):</span> "{editingMediaItem.altTextZh}"
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -3483,9 +3845,11 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
                         type="button"
                         onClick={() => {
                           handleUpdateMediaItem(editingMediaItem.index, 'name', editingMediaItem.name);
+                          handleUpdateMediaItem(editingMediaItem.index, 'nameZh', editingMediaItem.nameZh);
                           handleUpdateMediaItem(editingMediaItem.index, 'altText', editingMediaItem.altText);
+                          handleUpdateMediaItem(editingMediaItem.index, 'altTextZh', editingMediaItem.altTextZh);
                           setEditingMediaItem(null);
-                          onShowToast('SEO Alt Text & Caption updated.');
+                          onShowToast('SEO Alt Text & Caption updated for both languages.');
                         }}
                         className="rounded-xl bg-charcoal hover:bg-black text-white px-5 py-2 text-xs font-bold shadow-xs transition-all cursor-pointer"
                       >
