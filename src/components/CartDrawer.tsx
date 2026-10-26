@@ -82,9 +82,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigate }) => {
         </div>
 
         {/* Untitled UI Cart Items Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 divide-y divide-gray-100">
+        <div className="flex-1 overflow-y-auto px-6 py-6">
           {items.length > 0 ? (
-            <div className="divide-y divide-gray-100 space-y-4">
+            <div className="divide-y divide-gray-100">
               {items.map((item) => {
                 const title = language === 'en' ? item.titleEn : item.titleZh;
                 const subtitle = language === 'en' ? item.subtitleEn : item.subtitleZh;
@@ -92,7 +92,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigate }) => {
                 const itemTotal = price * item.quantity;
 
                 return (
-                  <div key={item.id} className="pt-4 first:pt-0 flex gap-4 items-start">
+                  <div key={item.id} className="py-5 first:pt-0 last:pb-0 flex gap-4 items-start">
                     {/* Product Thumbnail */}
                     <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-2 flex items-center justify-center">
                       <img
